@@ -16,7 +16,7 @@ namespace OmniGenesis
         public float age;               // Spielstunden
         public float hunger;            // 0 = satt, 1 = hungrig
         public float starvingHours;
-        public bool managed;            // Turm, Prüfung, Riss — nicht Teil des Ökosystems
+        public bool managed;            // Prüfung, Kult, Riss — nicht Teil des Ökosystems
         public Action<Creature> onDeath;
         public bool IsCorpse { get; private set; }
         public bool Tamed { get; private set; }
@@ -25,6 +25,9 @@ namespace OmniGenesis
 
         public float damageMult = 1f;
         public float expMult = 1f;
+        public string questTag;         // von der Geschichte erzeugt
+        public float summonInterval;    // Anführer rufen Leerenbrut herbei
+        float nextSummon;
 
         Rigidbody rb;
         Collider col;
@@ -56,7 +59,7 @@ namespace OmniGenesis
             get
             {
                 if (IsCorpse || IsAlly) return false;
-                return def.temper != Temper.Scheu || def.diet == Diet.Leere || def.diet == Diet.Turm;
+                return def.temper != Temper.Scheu || def.diet == Diet.Leere || def.diet == Diet.Konstrukt || def.diet == Diet.Kult;
             }
         }
 
@@ -66,7 +69,7 @@ namespace OmniGenesis
         // ---------- Erzeugen ----------
         public static Creature Spawn(SpeciesDef def, Vector3 pos, float age)
         {
-            var c = Create(def, pos, def.diet == Diet.Leere ? Faction.Void : def.diet == Diet.Turm ? Faction.Tower : Faction.Wild);
+            var c = Create(def, pos, def.diet == Diet.Leere || def.diet == Diet.Kult ? Faction.Void : def.diet == Diet.Konstrukt ? Faction.Construct : Faction.Wild);
             c.age = age;
             c.managed = !def.ecosystem;
             if (def.ecosystem && World.Eco != null) World.Eco.Register(c);
@@ -211,6 +214,16 @@ namespace OmniGenesis
                         Part(PrimitiveType.Cube, new Vector3(Mathf.Cos(i) * 0.5f, 1.2f + Mathf.Sin(i * 2f) * 0.4f, Mathf.Sin(i) * 0.5f), new Vector3(0.15f, 0.9f, 0.15f), c * 0.6f, new Vector3(i * 40f, i * 60f, i * 25f), 1.5f);
                     Part(PrimitiveType.Capsule, new Vector3(0f, 0.45f, 0f), new Vector3(0.35f, 0.45f, 0.35f), c * 0.5f, Vector3.zero);
                     break;
+                case BodyShape.Mensch:
+                    Part(PrimitiveType.Cylinder, new Vector3(0f, 0.55f, 0f), new Vector3(0.62f, 0.55f, 0.5f), c, Vector3.zero);
+                    Part(PrimitiveType.Capsule, new Vector3(0f, 1.2f, 0f), new Vector3(0.52f, 0.42f, 0.36f), c * 1.1f, Vector3.zero);
+                    Part(PrimitiveType.Sphere, new Vector3(0f, 1.75f, 0f), Vector3.one * 0.32f, new Color(0.8f, 0.68f, 0.58f), Vector3.zero);
+                    Part(PrimitiveType.Sphere, new Vector3(0f, 1.8f, -0.04f), new Vector3(0.4f, 0.4f, 0.42f), c * 0.7f, Vector3.zero);
+                    Part(PrimitiveType.Cube, new Vector3(0f, 1.76f, 0.15f), new Vector3(0.2f, 0.05f, 0.05f), new Color(0.75f, 0.3f, 1f), Vector3.zero, 3f);
+                    Part(PrimitiveType.Capsule, new Vector3(-0.34f, 1.15f, 0.05f), new Vector3(0.14f, 0.32f, 0.14f), c, new Vector3(-20f, 0f, 0f));
+                    Part(PrimitiveType.Capsule, new Vector3(0.34f, 1.15f, 0.12f), new Vector3(0.14f, 0.32f, 0.14f), c, new Vector3(-50f, 0f, 0f));
+                    Part(PrimitiveType.Sphere, new Vector3(0.36f, 1.0f, 0.45f), Vector3.one * 0.16f, new Color(0.7f, 0.25f, 1f), Vector3.zero, 3f);
+                    break;
                 default:
                     Part(PrimitiveType.Cube, new Vector3(0f, 1.05f, 0f), new Vector3(0.9f, 0.9f, 0.6f), c, Vector3.zero);
                     Part(PrimitiveType.Cube, new Vector3(0f, 1.75f, 0.05f), new Vector3(0.5f, 0.45f, 0.45f), c * 1.1f, Vector3.zero);
@@ -335,7 +348,7 @@ namespace OmniGenesis
             if (killerCreature != null && killerCreature.def.diet == Diet.Fleischfresser) killerCreature.Feed();
 
             // Risswesen zerfallen sofort — ihre Beute fällt direkt in das Inventar des Bezwingers.
-            if (byPlayer && managed && def.diet == Diet.Leere && World.Player != null)
+            if (byPlayer && managed && (def.diet == Diet.Leere || def.diet == Diet.Kult) && World.Player != null)
             {
                 for (int i = 0; i < def.drops.Length; i++)
                 {
@@ -345,6 +358,9 @@ namespace OmniGenesis
                     Notify.Combat("+" + n + " " + Items.Name(def.drops[i]));
                 }
             }
+
+            // Aufträge: Gegner der Geschichte zählen immer, Tiere nur, wenn der Spieler (oder sein Begleiter) sie erlegt.
+            if (World.Quests != null && (questTag != null || byPlayer)) World.Quests.OnKill(def.id);
 
             if (onDeath != null) onDeath(this);
             if (managed || undeadUntil > 0f)
@@ -500,9 +516,10 @@ namespace OmniGenesis
             if (h == null || h.IsDead || h == Health) return false;
             Faction me = Health.faction;
             Faction o = h.faction;
-            if (me == Faction.Ally) return (o == Faction.Void || o == Faction.Tower) || (o == Faction.Wild && h.GetComponent<Creature>() != null && h.GetComponent<Creature>().target != null && h.GetComponent<Creature>().target.faction == Faction.Player);
+            if (me == Faction.Ally) return (o == Faction.Void || o == Faction.Construct) || (o == Faction.Wild && h.GetComponent<Creature>() != null && h.GetComponent<Creature>().target != null && h.GetComponent<Creature>().target.faction == Faction.Player);
+            if (me == Faction.Void && def.diet == Diet.Kult) return o == Faction.Player || o == Faction.Ally || o == Faction.Citizen || o == Faction.Guard;
             if (me == Faction.Void) return o != Faction.Void && o != Faction.Imperial;
-            if (me == Faction.Tower) return o == Faction.Player || o == Faction.Ally;
+            if (me == Faction.Construct) return o == Faction.Player || o == Faction.Ally;
             return o == Faction.Player || o == Faction.Ally;
         }
 
@@ -526,9 +543,14 @@ namespace OmniGenesis
 
             bool night = World.Clock != null && World.Clock.IsNight;
 
-            if (def.diet == Diet.Leere || def.diet == Diet.Turm)
+            if (def.diet == Diet.Leere || def.diet == Diet.Konstrukt || def.diet == Diet.Kult)
             {
                 if (target == null) target = Health.Nearest(transform.position, AggroRange, IsEnemy);
+                if (target != null && summonInterval > 0f && Time.time >= nextSummon)
+                {
+                    nextSummon = Time.time + summonInterval;
+                    Summon();
+                }
                 if (target != null) { if (state != CreatureState.Windup && state != CreatureState.Recover) state = CreatureState.Chase; }
                 else if (Raider && World.Residents != null) { home = Places.VillageCenter; state = CreatureState.Home; }
                 else if (state != CreatureState.Wander && state != CreatureState.Idle) state = CreatureState.Wander;
@@ -633,14 +655,14 @@ namespace OmniGenesis
                 {
                     if (target == null || target.IsDead) { state = IsAlly ? CreatureState.Idle : CreatureState.Wander; break; }
                     Vector3 d = Flat(target.transform.position - transform.position);
-                    float reach = def.attackRange * def.size + 0.4f;
+                    float reach = def.ranged ? def.attackRange : def.attackRange * def.size + 0.4f;
                     if (d.magnitude <= reach)
                     {
                         Steer(Vector3.zero, 0f);
                         Face(d);
-                        Set(CreatureState.Windup, 0.45f);
+                        Set(CreatureState.Windup, def.ranged ? 0.7f : 0.45f);
                         flash = 0.6f;
-                        if (def.size > 1.8f || managed) Fx.Disc(transform.position + d.normalized * reach * 0.6f, reach * 0.7f, new Color(1f, 0.3f, 0.2f), 0.45f);
+                        if (!def.ranged && (def.size > 1.8f || managed)) Fx.Disc(transform.position + d.normalized * reach * 0.6f, reach * 0.7f, new Color(1f, 0.3f, 0.2f), 0.45f);
                     }
                     else Steer(d.normalized, speed);
                     break;
@@ -667,6 +689,7 @@ namespace OmniGenesis
         {
             if (target == null || target.IsDead) return;
             Vector3 d = Flat(target.transform.position - transform.position);
+            if (def.ranged) { Cast(); return; }
             rb.AddForce(d.normalized * def.mass * 4f, ForceMode.Impulse);
             float reach = (def.attackRange * def.size + 0.4f) * 1.4f;
             if (d.magnitude > reach) return;
@@ -683,6 +706,41 @@ namespace OmniGenesis
             if (otherCreature != null) otherCreature.Knockback(d.normalized * s.impulse * GameConstants.KnockbackScale);
             if (World.Hud != null && target.faction != Faction.Player && dealt > 0f)
                 World.Hud.Floating(target.Center, Mathf.RoundToInt(dealt).ToString(), new Color(1f, 0.6f, 0.5f), false);
+        }
+
+        // Äthergeschoss der Kultisten: F = m_Äther · a, wie beim Kampfmagier.
+        void Cast()
+        {
+            Strike s = PhysicsCombat.Spell(def.projectileMass, def.projectileAccel, damageMult);
+            Vector3 from = transform.position + Vector3.up * 1.5f * def.size + transform.forward * 0.6f;
+            Vector3 dir = (target.Center - from).normalized;
+            var p = Projectile.Spawn(Health, from, dir * 20f, new Color(0.7f, 0.25f, 1f), 0.25f + def.projectileMass * 0.3f);
+            p.canHit = IsEnemy;
+            string name = def.name;
+            p.onHit = (h, pr) =>
+            {
+                float dealt = h.Apply(new DamageInfo { amount = s.damage, point = h.Center, direction = pr.Velocity.normalized, impulse = s.impulse, source = Health, magic = true, formula = s.formula });
+                if (h.faction == Faction.Player)
+                {
+                    Notify.Combat(name + ": " + s.formula + " → " + Mathf.RoundToInt(dealt) + " Schaden an dir");
+                    if (World.Player != null) World.Player.motor.AddImpulse(pr.Velocity.normalized * s.impulse * GameConstants.KnockbackScale);
+                }
+                else if (World.Hud != null && dealt > 0f) World.Hud.Floating(h.Center, Mathf.RoundToInt(dealt).ToString(), new Color(0.8f, 0.5f, 1f), false);
+            };
+        }
+
+        void Summon()
+        {
+            var def2 = Species.Get("leerenbrut");
+            for (int i = 0; i < 2; i++)
+            {
+                Vector3 p = transform.position + new Vector3(UnityEngine.Random.Range(-4f, 4f), 0.5f, UnityEngine.Random.Range(-4f, 4f));
+                var v = Spawn(def2, p, 100f);
+                v.SetHome(transform.position);
+                if (questTag != null) v.questTag = null;
+            }
+            Fx.Ring(transform.position + Vector3.up * 0.2f, 5f, new Color(0.6f, 0.2f, 0.9f), 0.8f);
+            Notify.Combat(def.name + " ruft Leerenbrut aus dem Riss!");
         }
 
         void Steer(Vector3 dir, float speed)

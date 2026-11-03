@@ -17,6 +17,7 @@ namespace OmniGenesis
         readonly Npc npc;
         readonly string greeting;
         string result = "";
+        string storyLine;
         bool treatyForm;
         string treatyName = "";
         int treatyColor;
@@ -57,8 +58,8 @@ namespace OmniGenesis
                     return "„Jeder hat das Recht auf Heilung in den kaiserlichen Lazaretten (Art. 45). Komm, ich sehe nach dir.“";
                 case NpcRole.Pruefungsmeister:
                     return "„Die Kaiserliche Prüfung der Meisterschaft (Art. 48). Drei Wellen Golems. Ich messe Zeit und Treffer.“";
-                case NpcRole.Turmhueter:
-                    return "„Fünfzig Etagen. Die Namen der Bezwinger stehen in den Chroniken der Genesis (Art. 114).“";
+                case NpcRole.Gildenmeister:
+                    return "„Die Gilde der Abenteurer arbeitet nach der Charta des Throns (Art. 121). Arbeit gibt es jeden Tag: Jagd, Lieferungen, Risswache.“";
                 case NpcRole.Wache:
                     return World.Law.Wanted > 0 ? "„Im Namen des Throns: Du bist festgenommen!“" : "„Die Legionen schützen Trakte und Siedlungen vor den Geschöpfen der Risse (Art. 46).“";
                 case NpcRole.Ordensmagier:
@@ -101,8 +102,10 @@ namespace OmniGenesis
         {
             var pc = World.Player;
             var col = new Col(area);
-            col.Text(greeting, 18, Ui.TextColor);
+            if (!string.IsNullOrEmpty(storyLine)) col.Text(storyLine, 18, Ui.Gold);
+            else col.Text(greeting, 18, Ui.TextColor);
             col.Space(8f);
+            DrawQuestSection(col);
             var rest = new Rect(area.x, col.y, area.width, area.yMax - col.y);
 
             switch (npc.role)
@@ -122,7 +125,7 @@ namespace OmniGenesis
                     }
                     break;
                 case NpcRole.Pruefungsmeister: DrawTrial(col); break;
-                case NpcRole.Turmhueter: DrawTower(rest); break;
+                case NpcRole.Gildenmeister: DrawGuild(col); break;
                 case NpcRole.Wache:
                 case NpcRole.Dorfwache:
                     if (World.Law.Wanted > 0 && npc.role == NpcRole.Wache && Ui.Button(col.Next(48f), "Mich ergeben (Gericht binnen drei Tagen, Art. 29)", true, 17))
@@ -270,24 +273,50 @@ namespace OmniGenesis
             }
         }
 
-        void DrawTower(Rect area)
+        // Aufträge der Geschichte, Lieferungen und neue Angebote dieses NPCs.
+        void DrawQuestSection(Col col)
         {
+            var q = World.Quests;
             var pc = World.Player;
-            Ui.Text(new Rect(area.x, area.y, area.width, 24f), "Höchste bezwungene Etage: " + pc.towerBest + ". Du kannst jede Etage bis " + Mathf.Min(GameConstants.TowerFloors, pc.towerBest + 1) + " betreten.", 16, Ui.TextColor);
-            float bw = 92f, bh = 44f;
-            for (int i = 0; i < GameConstants.TowerFloors; i++)
+            if (q == null) return;
+            foreach (var s in q.TalkSteps(npc.npcName))
             {
-                int f = i + 1;
-                var r = new Rect(area.x + (i % 10) * (bw + 8f), area.y + 34f + (i / 10) * (bh + 8f), bw, bh);
-                string reason;
-                bool ok = World.Tower.CanEnter(f, out reason);
-                if (Ui.Button(r, "Etage " + f, ok, 15))
+                if (Ui.Button(col.Next(46f, 6f), "[Auftrag] " + s.def.title + ": " + s.Step.text, true, 15))
+                    storyLine = q.CompleteTalk(s);
+            }
+            foreach (var s in q.DeliverSteps(npc.npcName))
+            {
+                var st = s.Step;
+                int have = pc.inv.Count(st.target);
+                if (Ui.Button(col.Next(46f, 6f), "[Auftrag] Übergeben: " + st.count + "× " + Items.Name(st.target) + " (du hast " + have + ")", have >= st.count, 15))
                 {
-                    World.Tower.Enter(f);
-                    Closed = true;
+                    q.Deliver(s);
+                    result = "Übergeben.";
                 }
             }
-            Ui.Text(new Rect(area.x, area.y + 34f + 5 * (bh + 8f) + 6f, area.width, 60f), "Ukas des Throns: Etage 11–20 ab Rang D, 21–30 ab C, 31–40 ab B, 41–50 ab A. 10 % der Beute gehen an die Kasse (Art. 115).", 14, Ui.Dim);
+            foreach (var offer in q.OffersFrom(npc.npcName))
+            {
+                col.Text("Neuer Auftrag: " + offer.title, 16, Ui.Gold, true);
+                col.Text(offer.summary, 14, Ui.Dim);
+                if (Ui.Button(col.Next(40f, 8f), "Annehmen", true, 16)) q.Accept(offer);
+            }
+        }
+
+        void DrawGuild(Col col)
+        {
+            var q = World.Quests;
+            int activeContracts = 0;
+            foreach (var s in q.active) if (s.def.contract) activeContracts++;
+            col.Text("Aktive Gildenaufträge: " + activeContracts + " / " + Quests.MaxContracts + ". Neue Aufträge gibt es jeden Morgen um 6 Uhr.", 15, Ui.TextColor);
+            int lvl = World.Player.level;
+            foreach (var c in q.offeredContracts.ToArray())
+            {
+                col.Text(c.title, 16, Ui.Gold, true);
+                col.Text(c.summary, 13, Ui.Dim);
+                col.Text("Belohnung: " + (40 + 10 * lvl) + " Taler und ein Viertel einer Stufe an Erfahrung.", 13, Ui.TextColor);
+                if (Ui.Button(col.Next(38f, 8f), "Annehmen", activeContracts < Quests.MaxContracts, 15)) q.Accept(c);
+            }
+            if (q.offeredContracts.Count == 0) col.Text("Heute gibt es keine weiteren Aufträge.", 15, Ui.Dim);
         }
 
         void DrawResident(Col col)

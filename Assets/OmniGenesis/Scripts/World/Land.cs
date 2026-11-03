@@ -59,7 +59,7 @@ namespace OmniGenesis
             if (road < 7f) h = Mathf.Lerp(h * 0.5f, h, Mathf.SmoothStep(0f, 1f, road / 7f));
 
             h = Flatten(h, x, z, WorldLayout.City, WorldLayout.CityRadius + 6f, WorldLayout.CityRadius + 26f, CityHeight);
-            h = Flatten(h, x, z, WorldLayout.TowerPos, 18f, 32f, CityHeight);
+            h = Flatten(h, x, z, WorldLayout.GuildPos, 18f, 32f, CityHeight);
             h = Flatten(h, x, z, WorldLayout.ArenaPos, 19f, 32f, CityHeight);
             h = Flatten(h, x, z, WorldLayout.Village, 26f, 42f, VillageHeight);
             return h;
@@ -69,7 +69,7 @@ namespace OmniGenesis
         {
             float m = Fbm(x * 0.022f + 300f, z * 0.022f + 120f);
             if (Dist(x, z, WorldLayout.City) < WorldLayout.CityRadius + 14f) return 0f;
-            if (Dist(x, z, WorldLayout.TowerPos) < 24f || Dist(x, z, WorldLayout.ArenaPos) < 24f) return 0f;
+            if (Dist(x, z, WorldLayout.GuildPos) < 24f || Dist(x, z, WorldLayout.ArenaPos) < 24f) return 0f;
             if (Dist(x, z, WorldLayout.Village) < 30f) return 0f;
             if (WorldLayout.RoadDistance(x, z) < 5f) return 0f;
             return m;
@@ -110,7 +110,7 @@ namespace OmniGenesis
             if (dv < 25f) c = Color.Lerp(new Color(0.48f, 0.4f, 0.28f) * (0.9f + 0.2f * n), c, Mathf.Clamp01((dv - 22f) / 3f));
 
             float dc = Dist(x, z, WorldLayout.City);
-            bool plaza = dc < WorldLayout.CityRadius + 1f || Dist(x, z, WorldLayout.TowerPos) < 17f || Dist(x, z, WorldLayout.ArenaPos) < 18f;
+            bool plaza = dc < WorldLayout.CityRadius + 1f || Dist(x, z, WorldLayout.GuildPos) < 17f || Dist(x, z, WorldLayout.ArenaPos) < 18f;
             if (plaza)
             {
                 bool tile = ((Mathf.FloorToInt(x * 1.5f) + Mathf.FloorToInt(z * 1.5f)) & 1) == 0;

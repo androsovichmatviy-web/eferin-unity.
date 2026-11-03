@@ -163,7 +163,6 @@ namespace OmniGenesis
                 if (cam != null) rain.transform.position = cam.position + Vector3.up * 14f + cam.forward * 8f;
                 var emission = rain.emission;
                 float rate = Current == WeatherKind.Regen ? 1500f : Current == WeatherKind.Gewitter ? 3000f : 0f;
-                if (World.Tower != null && World.Tower.InTower) rate = 0f;
                 emission.rateOverTime = rate;
             }
         }

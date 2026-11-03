@@ -75,7 +75,7 @@ namespace OmniGenesis
             World.Eco = sys.AddComponent<Ecosystem>();
             World.Residents = sys.AddComponent<Residents>();
             World.Autonomy = sys.AddComponent<Autonomy>();
-            World.Tower = sys.AddComponent<Tower>();
+            World.Quests = sys.AddComponent<Quests>();
             World.Trial = sys.AddComponent<RankTrial>();
             World.Nodes = sys.AddComponent<ResourceNodes>();
             World.Ui = sys.AddComponent<UiWindows>();
@@ -118,7 +118,7 @@ namespace OmniGenesis
             Step(0.5f, "Errichte Grad Genesis…");
             yield return null;
             WorldBuilder.BuildCity(landRoot);
-            Step(0.56f, "Errichte den Turm und die Arena…");
+            Step(0.56f, "Errichte das Gildenhaus und die Arena…");
             yield return null;
             WorldBuilder.BuildOutskirts(landRoot);
             Step(0.6f, "Gründe Eichenhain…");
@@ -127,6 +127,7 @@ namespace OmniGenesis
             Step(0.64f, "Versiegle den Riss…");
             yield return null;
             World.Rift = WorldBuilder.BuildForbidden(landRoot);
+            WorldBuilder.BuildStoryPlaces(landRoot);
             Step(0.68f, "Pflanze die Wälder…");
             yield return null;
             WorldBuilder.PlantVegetation(landRoot, World.Nodes);
@@ -135,7 +136,6 @@ namespace OmniGenesis
             World.Nodes.Load(d);
             World.Market.Init(d, clock);
             World.Law.Load(d);
-            World.Tower.Load(d);
             World.Rift.Init(d, clock);
 
             Step(0.76f, "Rufe die Bürger des Reiches…");
@@ -155,6 +155,9 @@ namespace OmniGenesis
             yield return null;
             World.Eco.Init(d, clock);
             RestoreCompanion(d);
+            Step(0.96f, "Die Geschichte beginnt…");
+            yield return null;
+            World.Quests.Init(d, clock);
 
             clock.DayStarted += day => SaveGame();
             bool firstVisit = !d.worldInitialized;
@@ -165,7 +168,7 @@ namespace OmniGenesis
 
             if (firstVisit)
             {
-                Notify.System("Willkommen in Grad Genesis, " + World.Player.charName + ". Das Edikt (J) erklärt die Gesetze dieser Welt.");
+                Notify.System("Willkommen in Grad Genesis, " + World.Player.charName + ". Deine Aufträge findest du unter L, die Gesetze dieser Welt im Edikt (J).");
                 Notify.System("Ziel nach Art. 127: eine eigene Autonomie. Werde so stark wie der Kaiser (Stufe 100) und gewinne den Respekt aller Einwohner von Eichenhain (P).");
                 Notify.Announce("Der Thron der Genesis grüßt alle Reisenden. Ein Kontinent. Ein Thron. Ein Gesetz.");
             }
@@ -199,7 +202,7 @@ namespace OmniGenesis
             Npc.Spawn(NpcRole.Vermieter, "Henrike", "Vermieterin", Places.LandlordPos, 90f, new Color(0.5f, 0.45f, 0.3f), new Color(0.3f, 0.25f, 0.2f));
             Npc.Spawn(NpcRole.Heiler, "Schwester Alwine", "Heilerin des Lazaretts", Places.HealerPos, -90f, new Color(0.95f, 0.95f, 0.95f), new Color(0.7f, 0.2f, 0.2f));
             Npc.Spawn(NpcRole.Pruefungsmeister, "Brakka", "Prüfungsmeisterin", Places.TrialMasterPos, 90f, new Color(0.3f, 0.35f, 0.5f), gold);
-            Npc.Spawn(NpcRole.Turmhueter, "Isidor", "Turmhüter", Places.TowerKeeperPos, -90f, new Color(0.25f, 0.45f, 0.6f), gold);
+            Npc.Spawn(NpcRole.Gildenmeister, "Runa", "Gildenmeisterin der Abenteurer", Places.GuildMasterPos, -90f, new Color(0.3f, 0.45f, 0.3f), gold);
 
             string[] legion = { "Varus", "Tilda", "Marek", "Odila", "Konrad", "Sabin" };
             for (int i = 0; i < legion.Length; i++)
@@ -291,7 +294,7 @@ namespace OmniGenesis
             var d = World.Data;
             var pc = World.Player;
             pc.Save(d);
-            bool away = World.Tower.InTower || World.Trial.Active;
+            bool away = World.Trial.Active;
             d.hasPosition = !away;
             d.position = pc.transform.position;
             d.yaw = pc.transform.eulerAngles.y;
@@ -305,16 +308,16 @@ namespace OmniGenesis
             World.Residents.Save(d);
             World.Law.Save(d);
             World.Autonomy.Save(d);
-            World.Tower.Save(d);
+            World.Quests.Save(d);
             World.Rift.Save(d);
             d.announcements = new List<string>(Notify.Announcements);
             SaveSystem.Write(d);
         }
 
-        // Bodenhöhe per Strahl nach unten (Gebäudeböden, Turmetagen), sonst die Höhenfunktion.
+        // Bodenhöhe per Strahl nach unten (Gebäudeböden, Felsen), sonst die Höhenfunktion.
         public static float GroundHeight(Vector3 p, Transform ignore = null)
         {
-            float fallback = p.x > 1000f ? 0f : Land.Height(p.x, p.z);
+            float fallback = Land.Height(p.x, p.z);
             Vector3 origin = new Vector3(p.x, Mathf.Max(p.y, fallback) + 2.5f, p.z);
             var hits = Physics.RaycastAll(origin, Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore);
             float best = float.NegativeInfinity;
@@ -331,7 +334,6 @@ namespace OmniGenesis
 
         public static Vector3 SafeSpawn()
         {
-            if (World.Tower != null && World.Tower.InTower) return WorldLayout.TowerSpace + new Vector3(0f, 0.5f, -16f);
             return Places.CityGate + new Vector3(0f, 0.5f, -7f);
         }
     }

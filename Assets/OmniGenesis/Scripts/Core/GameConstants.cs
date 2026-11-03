@@ -30,7 +30,6 @@ namespace OmniGenesis
         // Wirtschaft (Art. 93, 115, 117, 34)
         public const float TradeTax = 0.10f;
         public const float RentTaxShare = 0.10f;
-        public const float TowerTreasuryShare = 0.10f;
         public const int GateFee = 25;
         public const int RoomRentPerDay = 30;
         public const int PetitionFee = 1000;
@@ -52,8 +51,8 @@ namespace OmniGenesis
         public const int MaxGuards = 6;
         public const int TreatyWarningDays = 3;     // Art. 140: Vorwarnung mit Frist
 
-        // Der Turm (Art. 113)
-        public const int TowerFloors = 50;
+        // Gildenaufträge (Art. 121): Erfahrung als Anteil einer Stufe
+        public const float ContractExpLevels = 0.25f;
 
         // Physik: F = m · a. Aus der Kraft (Newton) wird Schaden.
         public const float DamagePerNewton = 0.5f;

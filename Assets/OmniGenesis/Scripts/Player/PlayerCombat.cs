@@ -420,7 +420,7 @@ namespace OmniGenesis
                     foreach (var cr in Creature.Instances.ToArray())
                     {
                         if (raised >= 2) break;
-                        if (cr == null || !cr.IsCorpse || cr.def.diet == Diet.Turm) continue;
+                        if (cr == null || !cr.IsCorpse || cr.def.diet == Diet.Konstrukt) continue;
                         if ((cr.transform.position - transform.position).magnitude > a.radius) continue;
                         cr.RaiseAsUndead(a.duration);
                         raised++;

@@ -57,7 +57,7 @@ namespace OmniGenesis
         {
             if (player.inv.Count("aetherkristall") < 1)
             {
-                Notify.System("Du brauchst einen Ätherkristall (Ätheradern in den Verbotenen Landen, Turm, Markt).");
+                Notify.System("Du brauchst einen Ätherkristall (Ätheradern in den Verbotenen Landen, Markt, Aufträge).");
                 return;
             }
             if (Strength >= 99.5f)

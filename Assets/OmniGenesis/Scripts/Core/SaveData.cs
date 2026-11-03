@@ -32,6 +32,24 @@ namespace OmniGenesis
     }
 
     [Serializable]
+    public class QuestSave
+    {
+        public string id;
+        public int step;
+        public int progress;
+    }
+
+    [Serializable]
+    public class ContractSave
+    {
+        public string id;
+        public int kind;        // 0 Jagd, 1 Lieferung, 2 Risswache
+        public string target;
+        public int count;
+        public bool offered;
+    }
+
+    [Serializable]
     public class ResidentSave
     {
         public string name;
@@ -65,7 +83,6 @@ namespace OmniGenesis
         public string weapon = "";
         public string armor = "";
         public int rankIndex = -1;
-        public int towerBest;
         public bool permit;
         public bool demoMode;
         public bool firstPerson;
@@ -109,8 +126,13 @@ namespace OmniGenesis
         public int autonomyColor;
         public int treatyWarningUntil = -1;
 
-        // Chroniken der Genesis
-        public List<string> chronicles = new List<string>();
+        // Geschichte und Aufträge
+        public List<QuestSave> quests = new List<QuestSave>();
+        public List<string> questsDone = new List<string>();
+        public List<ContractSave> contracts = new List<ContractSave>();
+        public int contractDay;
+        public int contractCounter;
+        public string title = "";
     }
 
     public static class SaveSystem

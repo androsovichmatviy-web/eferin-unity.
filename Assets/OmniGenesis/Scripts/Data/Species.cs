@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace OmniGenesis
 {
-    public enum Diet { Pflanzenfresser, Fleischfresser, Leere, Turm }
+    public enum Diet { Pflanzenfresser, Fleischfresser, Leere, Konstrukt, Kult }
     public enum Temper { Scheu, Territorial, Feindselig }
-    public enum BodyShape { Vierbeiner, Kriecher, Leerenwesen, Golem }
+    public enum BodyShape { Vierbeiner, Kriecher, Leerenwesen, Golem, Mensch }
 
     public class SpeciesDef
     {
@@ -31,8 +31,13 @@ namespace OmniGenesis
         public Vector2 habitat;
         public float habitatRadius;
         public bool nocturnal;
-        public bool ecosystem = true;  // false: Turm-, Prüfungs- und Risswesen
+        public bool ecosystem = true;  // false: Prüfungsgolems, Kultisten und Risswesen
         public Color color;
+
+        // Fernkampf: Äthergeschoss mit F = m · a
+        public bool ranged;
+        public float projectileMass;
+        public float projectileAccel;
     }
 
     public static class Species
@@ -87,17 +92,34 @@ namespace OmniGenesis
                 drops = new[] { "aetherkristall", "leerenessenz" }, dropCounts = new[] { 5, 5 },
                 habitat = new Vector2(0f, 160f), habitatRadius = 25f, color = new Color(0.2f, 0.05f, 0.3f),
             },
+            // Meuterer von Haus Vorn (Hauptgeschichte). Sie nutzen Verbotene Künste und kämpfen auf Distanz.
             new SpeciesDef
             {
-                id = "turmwesen", name = "Turmwesen", diet = Diet.Turm, temper = Temper.Feindselig, shape = BodyShape.Golem,
-                mass = 70f, hp = 90f, armor = 3f, speed = 4.8f, attackAccel = 0.5f, aggroRange = 40f, size = 1f,
-                exp = 30, ecosystem = false,
-                drops = new[] { "aetherkristall" }, dropCounts = new[] { 0 },
-                habitat = Vector2.zero, habitatRadius = 20f, color = new Color(0.75f, 0.7f, 0.45f),
+                id = "kultist", name = "Vermummter Kultist", diet = Diet.Kult, temper = Temper.Feindselig, shape = BodyShape.Mensch,
+                mass = 75f, hp = 140f, armor = 4f, speed = 4.6f, attackAccel = 0.5f, attackRange = 14f, aggroRange = 24f, size = 1f,
+                exp = 70, ecosystem = false, ranged = true, projectileMass = 0.3f, projectileAccel = 150f,
+                drops = new[] { "leerenessenz" }, dropCounts = new[] { 1 },
+                habitat = Vector2.zero, habitatRadius = 20f, color = new Color(0.25f, 0.12f, 0.3f),
             },
             new SpeciesDef
             {
-                id = "pruefungsgolem", name = "Prüfungsgolem", diet = Diet.Turm, temper = Temper.Feindselig, shape = BodyShape.Golem,
+                id = "kultmeisterin", name = "Kultmeisterin Sela", diet = Diet.Kult, temper = Temper.Feindselig, shape = BodyShape.Mensch,
+                mass = 70f, hp = 700f, armor = 10f, speed = 4.8f, attackAccel = 0.6f, attackRange = 16f, aggroRange = 28f, size = 1.15f,
+                exp = 400, ecosystem = false, ranged = true, projectileMass = 0.45f, projectileAccel = 180f,
+                drops = new[] { "aetherkristall", "leerenessenz" }, dropCounts = new[] { 2, 2 },
+                habitat = Vector2.zero, habitatRadius = 20f, color = new Color(0.45f, 0.1f, 0.35f),
+            },
+            new SpeciesDef
+            {
+                id = "kasimir", name = "Kasimir Vorn", diet = Diet.Kult, temper = Temper.Feindselig, shape = BodyShape.Mensch,
+                mass = 90f, hp = 2200f, armor = 15f, speed = 5f, attackAccel = 0.8f, attackRange = 18f, aggroRange = 35f, size = 1.35f,
+                exp = 1500, ecosystem = false, ranged = true, projectileMass = 0.6f, projectileAccel = 220f,
+                drops = new[] { "aetherkristall", "leerenessenz" }, dropCounts = new[] { 4, 4 },
+                habitat = Vector2.zero, habitatRadius = 20f, color = new Color(0.15f, 0.05f, 0.2f),
+            },
+            new SpeciesDef
+            {
+                id = "pruefungsgolem", name = "Prüfungsgolem", diet = Diet.Konstrukt, temper = Temper.Feindselig, shape = BodyShape.Golem,
                 mass = 90f, hp = 80f, armor = 2f, speed = 4f, attackAccel = 0.45f, aggroRange = 40f, size = 1f,
                 exp = 0, ecosystem = false,
                 habitat = Vector2.zero, habitatRadius = 12f, color = new Color(0.55f, 0.6f, 0.7f),

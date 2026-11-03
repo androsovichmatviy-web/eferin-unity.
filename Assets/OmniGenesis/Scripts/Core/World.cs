@@ -18,7 +18,7 @@ namespace OmniGenesis
         public static RiftSeal Rift;
         public static Residents Residents;
         public static Autonomy Autonomy;
-        public static Tower Tower;
+        public static Quests Quests;
         public static RankTrial Trial;
         public static UiWindows Ui;
         public static Hud Hud;
@@ -39,7 +39,7 @@ namespace OmniGenesis
             Rift = null;
             Residents = null;
             Autonomy = null;
-            Tower = null;
+            Quests = null;
             Trial = null;
             Ui = null;
             Hud = null;
@@ -54,7 +54,7 @@ namespace OmniGenesis
         public static int Day { get { return Clock != null ? Clock.Day : 1; } }
     }
 
-    public enum Region { Kronendomaene, Gruenmark, Eichenhain, Erzhoehen, VerboteneLande, Turm }
+    public enum Region { Kronendomaene, Gruenmark, Eichenhain, Erzhoehen, VerboteneLande }
 
     // Karte des Kontinents (Ausschnitt): Grad Genesis, Provinz Grünmark mit dem Dorf Eichenhain,
     // die Erzhöhen und die Verbotenen Lande mit dem Riss.
@@ -70,9 +70,10 @@ namespace OmniGenesis
         public static readonly Vector2 Hills = new Vector2(120f, -20f);
         public static readonly Vector2 Rift = new Vector2(0f, 160f);
         public const float ForbiddenZ = 110f;
-        public static readonly Vector2 TowerPos = new Vector2(68f, -120f);
+        public static readonly Vector2 GuildPos = new Vector2(68f, -120f);
         public static readonly Vector2 ArenaPos = new Vector2(-72f, -120f);
-        public static readonly Vector3 TowerSpace = new Vector3(3000f, 0f, 0f);
+        public static readonly Vector2 ForestEdge = new Vector2(-138f, 76f);   // Waldrand nordwestlich von Eichenhain
+        public static readonly Vector2 Camp = new Vector2(142f, 26f);          // Lager von Haus Vorn in den Erzhöhen
 
         public static readonly Vector2[][] Roads =
         {
@@ -87,11 +88,10 @@ namespace OmniGenesis
 
         public static Region RegionAt(Vector3 p)
         {
-            if (p.x > 1000f) return Region.Turm;
             Vector2 q = XZ(p);
             if (q.y > ForbiddenZ) return Region.VerboteneLande;
             if ((q - City).magnitude < CityRadius + 6f) return Region.Kronendomaene;
-            if ((q - TowerPos).magnitude < 22f || (q - ArenaPos).magnitude < 22f) return Region.Kronendomaene;
+            if ((q - GuildPos).magnitude < 22f || (q - ArenaPos).magnitude < 22f) return Region.Kronendomaene;
             if ((q - Village).magnitude < VillageRegion) return Region.Eichenhain;
             if ((q - Hills).magnitude < 70f) return Region.Erzhoehen;
             return Region.Gruenmark;
@@ -105,7 +105,6 @@ namespace OmniGenesis
                 case Region.Eichenhain: return "Provinz Grünmark · Eichenhain";
                 case Region.Erzhoehen: return "Provinz Grünmark · Erzhöhen";
                 case Region.VerboteneLande: return "Verbotene Lande";
-                case Region.Turm: return "Der Turm";
                 default: return "Provinz Grünmark";
             }
         }

@@ -73,7 +73,7 @@ namespace OmniGenesis
             {
                 float a = (i / (float)count) * Mathf.PI * 2f;
                 var pos = Places.ArenaCenter + new Vector3(Mathf.Cos(a) * 8f - 3f, 0.6f, Mathf.Sin(a) * 8f);
-                var g = Creature.SpawnManaged(def, pos, hpMult, dmgMult, 0f, Faction.Tower);
+                var g = Creature.SpawnManaged(def, pos, hpMult, dmgMult, 0f, Faction.Construct);
                 g.onDeath = c => golems.Remove(c);
                 golems.Add(g);
             }

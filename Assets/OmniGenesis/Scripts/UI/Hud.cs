@@ -74,6 +74,7 @@ namespace OmniGenesis
 
             DrawStatus(pc);
             DrawInfo(w, pc);
+            DrawQuests(w);
             DrawSkills(w, h, pc);
             DrawMessages(w);
             DrawCombatLog(h);
@@ -88,7 +89,7 @@ namespace OmniGenesis
             }
 
             Ui.Text(new Rect(20f, h - 30f, w - 40f, 24f),
-                "WASD · Shift Sprint · Leertaste Sprung · LMB Angriff · Q/E/R Fähigkeiten · 1/2/3 Tränke · F Interagieren · V Kamera · C Charakter · I Inventar · M Karte · J Edikt · P Drei Säulen · Esc Menü",
+                "WASD · Shift Sprint · Leertaste Sprung · LMB Angriff · Q/E/R Fähigkeiten · 1/2/3 Tränke · F Interagieren · V Kamera · C Charakter · I Inventar · M Karte · L Aufträge · J Edikt · P Drei Säulen · Esc Menü",
                 14, new Color(1f, 1f, 1f, 0.55f));
         }
 
@@ -144,14 +145,43 @@ namespace OmniGenesis
             Ui.Rect(r, Ui.PanelBg);
             Ui.Frame(r, new Color(Ui.Border.r, Ui.Border.g, Ui.Border.b, 0.5f), 1f);
             var region = WorldLayout.RegionAt(pc.transform.position);
-            string where = region == Region.Turm ? "Der Turm — Etage " + World.Tower.Floor : WorldLayout.RegionName(region);
+            string where = WorldLayout.RegionName(region);
             if (region == Region.Eichenhain && World.Autonomy.IsAutonomous) where = "Autonomie „" + World.Autonomy.autonomyName + "“";
             Ui.Text(new Rect(r.x + 12f, r.y + 6f, r.width - 24f, 24f), where, 16, Ui.Gold, TextAnchor.MiddleLeft, true);
             Ui.Text(new Rect(r.x + 12f, r.y + 30f, r.width - 24f, 22f), World.Clock.Stamp() + (World.Clock.IsNight ? " · Nacht" : "") + " · " + Weather.Name(World.Weather.Current), 15, Ui.TextColor);
             Ui.Text(new Rect(r.x + 12f, r.y + 52f, r.width - 24f, 22f), "Siegel des Risses: " + Mathf.RoundToInt(World.Rift.Strength) + " %" + (World.Rift.Summons ? " · GROSSER AUFRUF" : ""), 14, World.Rift.Strength < 30f ? Ui.Bad : Ui.Dim);
             Ui.Text(new Rect(r.x + 12f, r.y + 74f, r.width - 24f, 22f), "Respekt in Eichenhain: " + World.Residents.RespectingCount + " / " + World.Residents.list.Count, 14, Ui.Dim);
             if (region == Region.VerboteneLande && !pc.permit)
-                Ui.Text(new Rect(r.x, r.yMax + 4f, r.width, 40f), "Ohne Kaiserliche Erlaubnis! Die Ordensmagier greifen an (Art. 112).", 15, Ui.Bad, TextAnchor.UpperLeft, true);
+                Ui.Text(new Rect(r.x - 300f, r.yMax + 4f, r.width + 300f, 40f), "Ohne Kaiserliche Erlaubnis! Die Ordensmagier greifen an (Art. 112).", 15, Ui.Bad, TextAnchor.UpperLeft, true);
+        }
+
+        // Aufgabenverfolger rechts oben: aktuelle Schritte der Geschichte und der Aufträge.
+        void DrawQuests(float w)
+        {
+            var q = World.Quests;
+            if (q == null) return;
+            float x = w - 356f, y = 168f, width = 340f;
+            int shown = 0;
+            var list = new List<QuestState>(q.active);
+            list.Sort((a, b) => (b.def.main ? 1 : 0) - (a.def.main ? 1 : 0));
+            foreach (var s in list)
+            {
+                if (shown >= 4 || s.Step == null) break;
+                string head = s.def.title;
+                string step = "• " + s.Step.text + s.ProgressText + (s.Step.night && !World.Clock.IsNight ? " — warte auf die Nacht" : "");
+                float h = Ui.TextHeight(head, 15, width - 20f) + Ui.TextHeight(step, 14, width - 20f) + 14f;
+                var r = new Rect(x, y, width, h);
+                Ui.Rect(r, new Color(0.02f, 0.06f, 0.12f, 0.7f));
+                Ui.Rect(new Rect(r.x, r.y, 4f, r.height), s.def.main ? Ui.Gold : Ui.Border);
+                float th = Ui.TextHeight(head, 15, width - 20f);
+                Ui.Text(new Rect(r.x + 12f, r.y + 4f, width - 20f, th), head, 15, s.def.main ? Ui.Gold : Ui.TextColor, TextAnchor.UpperLeft, true);
+                Ui.Text(new Rect(r.x + 12f, r.y + 6f + th, width - 20f, h - th), step, 14, Ui.Dim);
+                y += h + 6f;
+                shown++;
+            }
+            string hint = q.NextChapterHint;
+            if (hint != null && !q.active.Exists(s => s.def.main))
+                Ui.Text(new Rect(x, y, width, 40f), "Nächstes Kapitel: " + hint, 13, Ui.Dim);
         }
 
         void DrawSkills(float w, float h, PlayerCharacter pc)
@@ -270,12 +300,19 @@ namespace OmniGenesis
                 float d = (hp.transform.position - camPos).magnitude;
                 bool npc = hp.GetComponent<Npc>() != null;
                 if (d > (npc ? 14f : 28f)) continue;
-                if (!npc && hp.Fraction >= 1f && hp.faction != Faction.Void && hp.faction != Faction.Tower) continue;
+                if (!npc && hp.Fraction >= 1f && hp.faction != Faction.Void && hp.faction != Faction.Construct) continue;
                 Vector3 top = hp.transform.position + Vector3.up * (hp.height + 0.5f);
                 Vector2 p;
                 if (!Ui.WorldToGui(cam, top, out p)) continue;
                 Color nc = hp.faction == Faction.Ally ? Ui.Good : hp.faction == Faction.Imperial ? Ui.Gold : npc ? Ui.TextColor : new Color(1f, 0.85f, 0.85f);
                 Ui.Text(new Rect(p.x - 110f, p.y - 30f, 220f, 20f), hp.displayName, 13, nc, TextAnchor.MiddleCenter);
+                var n = hp.GetComponent<Npc>();
+                if (n != null && World.Quests != null)
+                {
+                    // ! = neuer Auftrag, ? = hier geht ein Auftrag weiter
+                    string mark = World.Quests.HasTurnIn(n.npcName) ? "?" : World.Quests.HasOffer(n.npcName) ? "!" : null;
+                    if (mark != null) Ui.Text(new Rect(p.x - 30f, p.y - 72f, 60f, 44f), mark, 36, Ui.Gold, TextAnchor.MiddleCenter, true);
+                }
                 if (!npc || hp.Fraction < 1f)
                     if (!hp.invulnerable) Ui.Bar(new Rect(p.x - 40f, p.y - 10f, 80f, 6f), hp.Fraction, new Color(0.89f, 0.36f, 0.36f));
             }

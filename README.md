@@ -4,13 +4,13 @@
 
 *Ein Kontinent. Ein Thron. Ein Gesetz.*
 
-Omni Genesis ist eine offene Sandbox-Welt ohne aufgezwungene Quests. Die Welt läuft nach eigenen Regeln:
+Omni Genesis ist eine offene Sandbox-Welt mit einer eigenen Geschichte. Die Welt läuft nach eigenen Regeln:
 Tiere vermehren sich und sterben, Preise steigen und fallen mit Angebot und Nachfrage, das Siegel des Risses
 wird schwächer, Wachen verfolgen Verbrecher. Grundlage ist das **Kaiserliche Edikt von Omni Genesis**
 (166 Artikel). Viele Artikel sind direkt als Spielmechanik umgesetzt. Im Spiel öffnet die Taste **J** die Auszüge des Edikts,
 jeweils mit dem Hinweis, welche Mechanik sie umsetzt.
 
-Das große Ziel (Art. 127): ein eigener Teil des Reiches, die **Autonomie**. Dafür muss der Prätendent
+Die Hauptgeschichte erzählt von einer **Meuterei gegen das Edikt** (sechs Kapitel). Danach wartet das große Ziel (Art. 127): ein eigener Teil des Reiches, die **Autonomie**. Dafür muss der Prätendent
 **so stark sein wie Kaiser Mortem Underwood (Stufe 100)**, und **alle Einwohner** des Landes müssen ihn respektieren.
 
 ---
@@ -53,7 +53,7 @@ git pull origin main
 | 1 / 2 / 3 | Heiltrank · Ätherelixier · Gebratenes Fleisch |
 | F | Interagieren (Sprechen, Sammeln, Ausweiden, Tore, Bett …) |
 | **V** | **Ich-Perspektive ↔ dritte Person** |
-| C · I · M · J · P | Charakter · Inventar/Handwerk · Karte · Edikt · Drei Säulen |
+| C · I · M · **L** · J · P | Charakter · Inventar/Handwerk · Karte · **Aufträge** · Edikt · Drei Säulen |
 | G | Sich dem Gericht stellen (wenn gesucht) |
 | F5 · Esc | Schnellspeichern · Menü |
 | Alt (halten) | Mauszeiger freigeben |
@@ -129,9 +129,29 @@ und wer über der Traglast liegt, wird langsamer.
   Dort liegt das **Siegel der Eindämmung** (Art. 16). Wer es mit Ätherkristallen verstärkt, erfüllt seine Bürgerpflicht (Art. 60).
   Fällt es unter 15 %, folgt der **Große Aufruf** (Art. 66).
 * **Ränge des Aufstiegs** F bis SSS (Art. 48, 69): Prüfung in der Arena, die Ränge S und höher verleiht der Kaiser.
-  Ohne Rang öffnet der Turmhüter den Turm nicht.
-* **Der Turm** (Art. 113–115): 50 prozedurale Etagen, Wächter auf jeder 10. Etage, **Chroniken der Genesis**
-  mit dem ersten Bezwinger jeder Etage, 10 % der Beute an die Kasse.
+* **Gildenhaus der Abenteurer** (Art. 121) östlich der Stadt: Gildenmeisterin Runa vergibt jeden Morgen neue Aufträge.
+
+### Geschichte und Aufträge (Taste L)
+
+Die Hauptgeschichte spielt in der Welt des Edikts und startet von selbst, sobald die nötige Stufe erreicht ist.
+
+| Kapitel | Inhalt | ab Stufe |
+|---|---|---|
+| I. Bürger des Reiches | Anmeldung bei Richter Ataklas (Art. 87), Prüfung in der Arena | 1 |
+| II. Das müde Siegel | Sondererlaubnis, Runensplitter am Kraterrand, Siegel verstärken: jemand schwächt es mit Absicht (Verbotene Künste) | 3 |
+| III. Die Verschwundenen von Eichenhain | Brandzeichen am Waldrand, Kultisten, ein Brief mit dem Wappen von Haus Vorn | 5 |
+| IV. Das Zeugnis der Arbiter | Ataklas bezeugt den Brief (Art. 97), der Kaiser befiehlt, die Meuterei aufzuhalten (Art. 141, 153) | 6 |
+| V. Das Lager in den Erzhöhen | Lager der Meuterer, Kultmeisterin Sela, der Ritualplan | 8 |
+| VI. Die Nacht des Risses | nachts am Riss: Kasimir Vorn, Siegel wiederherstellen, Titel „Hüter von Grünmark“ | 12 |
+
+Haus Vorn verlor seine Lande, weil es den Vasalleneid verweigerte (Übergangsbestimmungen Nr. 2). Statt den rechtmäßigen Weg
+zu gehen, will es das Siegel brechen und Grünmark im Chaos an sich reißen — eine Meuterei. Am Ende zeigt der Kaiser dem
+Spieler den rechtmäßigen Weg: die Drei Säulen.
+
+* **Nebenaufträge** von Bürgern und Einwohnern (! über dem Kopf, ? wenn es weitergeht). Einige sind an die Systeme
+  gekoppelt: Wölfe jagen, den Bestand der Grasläufer wieder wachsen lassen, Fleisch gegen hohe Preise liefern, Leerenbrut an der Grenze.
+* **Gildenaufträge** jeden Tag: Jagd (nur auf Arten mit gesundem Bestand über 70 %), Lieferungen, Risswache.
+* Aufträge erscheinen im Verfolger rechts oben und als goldene Markierung auf der Karte (M).
 
 ### Weg der Diplomatie (Abschnitt X)
 
@@ -158,12 +178,12 @@ Assets/OmniGenesis/
   Scenes/        Hauptmenue.unity, Welt.unity (werden per Menü erzeugt)
   Scripts/
     Core/        Regeln (GameConstants), Eingabe, Spielstand, Physik F = m·a, Lebenspunkte
-    Data/        Rassen, Klassen und Hybride, Gegenstände und Rezepte, Tierarten
+    Data/        Rassen, Klassen und Hybride, Gegenstände und Rezepte, Tierarten, Geschichte und Aufträge
     Player/      Charakter, Bewegung, Kamera (1./3. Person), Kampf, Interaktion, Figur
     Combat/      Geschosse, Effekte
-    World/       Gelände, Weltbau, Uhr, Wetter, Ressourcen, Turm, Rangprüfung
+    World/       Gelände, Weltbau, Uhr, Wetter, Ressourcen, Rangprüfung
     Ecosystem/   Lebewesen (Rigidbody-KI), Populationen, Riss und Siegel
-    Society/     NPCs, Markt und Kasse, Recht, Einwohner, Autonomie, Edikt-Texte
+    Society/     NPCs, Markt und Kasse, Recht, Einwohner, Autonomie, Aufträge, Edikt-Texte
     UI/          HUD, Systemfenster, Dialoge, Hauptmenü, Ladebildschirm „Lade Welt… %“
     Bootstrap/   WorldBootstrap: baut die Welt Schritt für Schritt
     Editor/      Menü „Omni Genesis → Projekt einrichten“
@@ -187,5 +207,5 @@ Alle Zahlen des Regelwerks (Kaiserstufe, Respektschwelle, Abgaben, Gebühren, Ph
 1. Unity Hub → New project → **Universal 3D (URP)**, Unity 6.
 2. Скопируйте `Assets/OmniGenesis` в папку `Assets` проекта.
 3. В Unity выберите меню **Omni Genesis → Projekt einrichten**. Создадутся сцены и Build Settings.
-4. Нажмите **Play**. Камера переключается клавишей **V** (от первого или третьего лица), справочник по Эдикту открывается на **J**,
-   Три Столпа на **P**. Для показа на защите при создании персонажа включите **Demo-Modus**: тогда работают клавиши F1–F6.
+4. Нажмите **Play**. Камера переключается клавишей **V** (от первого или третьего лица), задания и сюжет открываются на **L**,
+   справочник по Эдикту на **J**, Три Столпа на **P**. Для показа на защите при создании персонажа включите **Demo-Modus**: тогда работают клавиши F1–F6.

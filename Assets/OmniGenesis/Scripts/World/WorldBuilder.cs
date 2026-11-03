@@ -7,9 +7,9 @@ namespace OmniGenesis
     public static class Places
     {
         public static Vector3 CityPlaza, CityGate, LazarettSpawn, EmperorPos, JudgePos, MerchantA, MerchantB,
-            SmithPos, AnvilPos, LandlordPos, HealerPos, TrialMasterPos, TowerKeeperPos, TowerDoor, ArenaCenter,
+            SmithPos, AnvilPos, LandlordPos, HealerPos, TrialMasterPos, GuildMasterPos, GuildHall, ArenaCenter,
             VillageCenter, VillageGate, VillageTraderPos, MercenaryPos, BorderGate, BorderPostL, BorderPostR,
-            SealPos, RiftPos, CourtPos;
+            SealPos, RiftPos, CourtPos, CraterRim, ForestEdge, CampPos;
         public static float EmperorYaw, JudgeYaw;
         public static readonly List<Vector3> CityPatrol = new List<Vector3>();
         public static readonly List<Vector3> CityWalk = new List<Vector3>();
@@ -180,20 +180,25 @@ namespace OmniGenesis
             }
         }
 
-        // ---------- Turm und Arena (Kronendomäne außerhalb der Mauern) ----------
+        // ---------- Gildenhaus der Abenteurer (Art. 121) und Arena (Kronendomäne außerhalb der Mauern) ----------
         public static void BuildOutskirts(Transform root)
         {
-            var t = new GameObject("Der Turm").transform;
+            var t = new GameObject("Gildenhaus der Abenteurer").transform;
             t.SetParent(root, false);
-            Vector3 tp = G(WorldLayout.TowerPos);
-            Build.Prim(PrimitiveType.Cylinder, t, tp + Vector3.up * 75f, new Vector3(16f, 75f, 16f), new Color(0.82f, 0.8f, 0.76f));
-            for (int i = 1; i <= 5; i++)
-                Build.Prim(PrimitiveType.Cylinder, t, tp + Vector3.up * (i * 30f), new Vector3(17f, 0.6f, 17f), new Color(0.4f, 0.8f, 1f), false, 2.5f);
-            Build.Prim(PrimitiveType.Sphere, t, tp + Vector3.up * 154f, new Vector3(6f, 9f, 6f), new Color(0.5f, 0.85f, 1f), false, 4f);
-            Build.Box(t, tp + new Vector3(-8.1f, 2.5f, 0f), new Vector3(0.4f, 5f, 3.6f), new Color(0.2f, 0.5f, 0.8f), false, 2f);
-            Places.TowerDoor = tp + new Vector3(-11f, 0.2f, 0f);
-            Places.TowerKeeperPos = tp + new Vector3(-10f, 0f, 3f);
-            Build.Banner(t, tp + new Vector3(-10f, 0f, -3.5f), -90f, 6f);
+            Vector3 gp = G(WorldLayout.GuildPos);
+            Places.GuildHall = gp;
+            var hall = Build.Hall(t, gp, -90f, 14f, 11f, 7f, new Color(0.7f, 0.58f, 0.42f), new Color(0.25f, 0.35f, 0.25f), new Color(0.42f, 0.3f, 0.2f), 2.6f);
+            hall.name = "Gildenhalle";
+            Build.Box(hall, new Vector3(0f, 0.5f, -2f), new Vector3(5f, 1f, 1.4f), Wood);
+            for (int i = -1; i <= 1; i++) Build.Box(hall, new Vector3(i * 3.5f, 0.45f, 2.5f), new Vector3(1.6f, 0.9f, 1.6f), Wood * 0.9f);
+            var board = Build.Group("Auftragsbrett", t, gp + new Vector3(-7.5f, 0f, -3.5f), -90f);
+            Build.Box(board, new Vector3(-1.1f, 1.1f, 0f), new Vector3(0.15f, 2.2f, 0.15f), Wood);
+            Build.Box(board, new Vector3(1.1f, 1.1f, 0f), new Vector3(0.15f, 2.2f, 0.15f), Wood);
+            Build.Box(board, new Vector3(0f, 1.6f, 0f), new Vector3(2.4f, 1.3f, 0.1f), Wood * 0.8f);
+            for (int i = 0; i < 4; i++)
+                Build.Box(board, new Vector3(-0.8f + i * 0.55f, 1.6f + (i % 2) * 0.2f, 0.07f), new Vector3(0.4f, 0.5f, 0.02f), new Color(0.95f, 0.9f, 0.75f), false, 0.3f);
+            Places.GuildMasterPos = gp + new Vector3(-8f, 0f, 1.5f);
+            Build.Banner(t, gp + new Vector3(-7.5f, 0f, 4f), -90f, 6f);
 
             var a = new GameObject("Arena der Prüfung").transform;
             a.SetParent(root, false);
@@ -321,10 +326,40 @@ namespace OmniGenesis
             light.intensity = 3f;
 
             Places.SealPos = G(0f, 136f);
+            Places.CraterRim = G(0f, 128f);
             var seal = new GameObject("Siegel der Eindämmung");
             seal.transform.SetParent(r, false);
             seal.transform.position = Places.SealPos;
             return seal.AddComponent<RiftSeal>();
+        }
+
+        // ---------- Orte der Geschichte: Waldrand bei Eichenhain und das Lager von Haus Vorn ----------
+        public static void BuildStoryPlaces(Transform root)
+        {
+            Places.ForestEdge = G(WorldLayout.ForestEdge);
+            Places.CampPos = G(WorldLayout.Camp);
+
+            var camp = Build.Group("Lager von Haus Vorn", root, Places.CampPos, 0f);
+            Color cloth = new Color(0.25f, 0.15f, 0.3f);
+            for (int i = 0; i < 5; i++)
+            {
+                float a = i * 72f * Mathf.Deg2Rad;
+                Vector3 p = new Vector3(Mathf.Cos(a) * 9f, 0f, Mathf.Sin(a) * 9f);
+                var tent = Build.Group("Zelt", camp, Places.CampPos + p, -i * 72f + 90f);
+                tent.position = new Vector3(tent.position.x, Land.Height(tent.position.x, tent.position.z), tent.position.z);
+                Build.Roof(tent, new Vector3(0f, 0f, 0f), 3.2f, 3.6f, 2.2f, cloth);
+            }
+            Build.Prim(PrimitiveType.Cylinder, camp, Places.CampPos + Vector3.up * 0.1f, new Vector3(2f, 0.1f, 2f), new Color(0.1f, 0.08f, 0.08f), false);
+            Build.Prim(PrimitiveType.Sphere, camp, Places.CampPos + Vector3.up * 0.4f, new Vector3(0.9f, 0.6f, 0.9f), new Color(0.7f, 0.25f, 1f), false, 2.5f);
+            Build.Banner(camp, Places.CampPos + new Vector3(3f, 0f, -3f), 30f, 5f, new Color(0.3f, 0.08f, 0.12f));
+            var glow = new GameObject("Lagerfeuer");
+            glow.transform.SetParent(camp, false);
+            glow.transform.position = Places.CampPos + Vector3.up * 1.5f;
+            var l = glow.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = new Color(0.7f, 0.3f, 1f);
+            l.range = 14f;
+            l.intensity = 2f;
         }
 
         // Großes Tor: Bogen mit leuchtendem Portal (Art. 34).
@@ -422,7 +457,7 @@ namespace OmniGenesis
         public static bool FreeLand(Vector2 p)
         {
             if ((p - WorldLayout.City).magnitude < WorldLayout.CityRadius + 10f) return false;
-            if ((p - WorldLayout.TowerPos).magnitude < 22f || (p - WorldLayout.ArenaPos).magnitude < 22f) return false;
+            if ((p - WorldLayout.GuildPos).magnitude < 22f || (p - WorldLayout.ArenaPos).magnitude < 22f) return false;
             if ((p - WorldLayout.Village).magnitude < 27f) return false;
             if (WorldLayout.RoadDistance(p.x, p.y) < 3.5f) return false;
             if (Mathf.Abs(p.x) > 172f || Mathf.Abs(p.y) > 172f) return false;

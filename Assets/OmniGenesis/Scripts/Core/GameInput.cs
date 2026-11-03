@@ -10,7 +10,7 @@ namespace OmniGenesis
         Jump, Sprint, Interact,
         Skill1, Skill2, Skill3,
         Potion1, Potion2, Potion3,
-        Character, Inventory, Map, Edict, Pillars,
+        Character, Inventory, Map, Edict, Pillars, Quests,
         CameraToggle, Surrender, Pause, ShowCursor, QuickSave,
         Demo1, Demo2, Demo3, Demo4, Demo5,
     }
@@ -38,6 +38,7 @@ namespace OmniGenesis
                 case Act.Map: return Key.M;
                 case Act.Edict: return Key.J;
                 case Act.Pillars: return Key.P;
+                case Act.Quests: return Key.L;
                 case Act.CameraToggle: return Key.V;
                 case Act.Surrender: return Key.G;
                 case Act.Pause: return Key.Escape;
@@ -115,6 +116,7 @@ namespace OmniGenesis
                 case Act.Map: return KeyCode.M;
                 case Act.Edict: return KeyCode.J;
                 case Act.Pillars: return KeyCode.P;
+                case Act.Quests: return KeyCode.L;
                 case Act.CameraToggle: return KeyCode.V;
                 case Act.Surrender: return KeyCode.G;
                 case Act.Pause: return KeyCode.Escape;

@@ -124,7 +124,7 @@ namespace OmniGenesis
         {
             if (!byPlayer || !WorldLayout.InVillageRegion(pos)) return;
             if (def.temper == Temper.Scheu && def.diet != Diet.Leere) return;
-            float gain = def.diet == Diet.Leere ? 4f : 2f;
+            float gain = def.diet == Diet.Leere || def.diet == Diet.Kult ? 4f : 2f;
             ChangeAll(gain);
             if (Time.time - lastThanks > 20f)
             {

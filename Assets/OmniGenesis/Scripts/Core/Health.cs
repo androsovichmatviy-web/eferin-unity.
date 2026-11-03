@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace OmniGenesis
 {
-    public enum Faction { Player, Ally, Citizen, Guard, Imperial, Wild, Void, Tower }
+    public enum Faction { Player, Ally, Citizen, Guard, Imperial, Wild, Void, Construct }
 
     public struct DamageInfo
     {

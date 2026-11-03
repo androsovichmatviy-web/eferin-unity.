@@ -107,7 +107,6 @@ namespace OmniGenesis
         public string weaponId = "";
         public string armorId = "";
         public int rankIndex = -1;
-        public int towerBest;
         public bool permit;
         public bool demo;
 
@@ -336,7 +335,6 @@ namespace OmniGenesis
             }
             int lost = Mathf.RoundToInt(taler * 0.1f);
             taler -= lost;
-            if (World.Tower != null && World.Tower.InTower) World.Tower.Leave(false);
             health.Revive(1f);
             aether = MaxAether;
             if (World.Clock != null) World.Clock.Advance(120f);
@@ -477,7 +475,6 @@ namespace OmniGenesis
             weaponId = d.weapon;
             armorId = d.armor;
             rankIndex = d.rankIndex;
-            towerBest = d.towerBest;
             permit = d.permit;
             demo = d.demoMode;
 
@@ -504,7 +501,6 @@ namespace OmniGenesis
             d.weapon = weaponId;
             d.armor = armorId;
             d.rankIndex = rankIndex;
-            d.towerBest = towerBest;
             d.permit = permit;
             d.demoMode = demo;
             d.hp = health.hp;

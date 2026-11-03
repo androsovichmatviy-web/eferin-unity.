@@ -36,7 +36,7 @@ namespace OmniGenesis
             BuildBackdrop();
         }
 
-        // Ein kleiner Turm mit leuchtenden Ringen als Hintergrund.
+        // Ein Obelisk mit leuchtenden Ringen als Hintergrund.
         void BuildBackdrop()
         {
             var root = new GameObject("Kulisse").transform;

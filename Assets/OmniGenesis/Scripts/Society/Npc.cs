@@ -5,7 +5,7 @@ namespace OmniGenesis
 {
     public enum NpcRole
     {
-        Kaiser, Richter, Haendler, Schmied, Vermieter, Heiler, Pruefungsmeister, Turmhueter,
+        Kaiser, Richter, Haendler, Schmied, Vermieter, Heiler, Pruefungsmeister, Gildenmeister,
         Wache, Ordensmagier, Buerger, Einwohner, Soeldnerfuehrer, Dorfwache, Kraemer,
     }
 
@@ -235,8 +235,8 @@ namespace OmniGenesis
             {
                 var c = h.GetComponent<Creature>();
                 if (c == null || c.IsCorpse || c.IsAlly) return false;
-                if (c.def.diet == Diet.Turm) return false;
-                return c.def.diet == Diet.Leere || (c.Hostile && (h.LastAttacker != null || c.def.temper == Temper.Feindselig));
+                if (c.def.diet == Diet.Konstrukt) return false;
+                return c.def.diet == Diet.Leere || c.def.diet == Diet.Kult || (c.Hostile && (h.LastAttacker != null || c.def.temper == Temper.Feindselig));
             });
         }
 

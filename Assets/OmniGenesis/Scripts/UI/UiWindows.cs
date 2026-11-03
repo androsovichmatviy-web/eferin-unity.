@@ -9,7 +9,7 @@ namespace OmniGenesis
         void Draw(Rect area);
     }
 
-    public enum WindowId { None, Character, Inventory, Map, Edict, Pillars, Dialogue, Pause }
+    public enum WindowId { None, Character, Inventory, Map, Edict, Pillars, Quests, Dialogue, Pause }
 
     // Systemfenster: Charakter (C), Inventar (I), Karte (M), Edikt (J), Drei Säulen (P), Menü (Esc), Dialoge.
     public class UiWindows : MonoBehaviour
@@ -30,7 +30,7 @@ namespace OmniGenesis
             "+10 LP, +0,2 Rüstung, Regeneration",
             "+6 Äther, Ätherbeschleunigung +3 %, Ätherregeneration",
         };
-        static readonly string[] EdictTabs = { "Edikt", "Chroniken", "Ränge", "Kasse", "Verkündungen", "Register" };
+        static readonly string[] EdictTabs = { "Edikt", "Ränge", "Kasse", "Verkündungen", "Register" };
 
         public void SetMapTexture(Texture2D t) { mapTex = t; }
 
@@ -77,6 +77,7 @@ namespace OmniGenesis
             if (GameInput.Pressed(Act.Map)) Toggle(WindowId.Map);
             if (GameInput.Pressed(Act.Edict)) Toggle(WindowId.Edict);
             if (GameInput.Pressed(Act.Pillars)) Toggle(WindowId.Pillars);
+            if (GameInput.Pressed(Act.Quests)) Toggle(WindowId.Quests);
             if (GameInput.Pressed(Act.QuickSave))
             {
                 WorldBootstrap.SaveGame();
@@ -96,6 +97,7 @@ namespace OmniGenesis
                 case WindowId.Map: DrawMap(); break;
                 case WindowId.Edict: DrawEdict(); break;
                 case WindowId.Pillars: DrawPillars(); break;
+                case WindowId.Quests: DrawQuests(); break;
                 case WindowId.Pause: DrawPause(); break;
                 case WindowId.Dialogue: DrawDialogue(); break;
             }
@@ -173,7 +175,7 @@ namespace OmniGenesis
 
             right.Space(8f);
             right.Text("RANG UND TURM", 17, Ui.Gold, true);
-            right.Text("Rang des Aufstiegs: " + Ranks.Name(pc.rankIndex) + " · Höchste Turmetage: " + pc.towerBest + " / " + GameConstants.TowerFloors, 16, Ui.TextColor);
+            right.Text("Rang des Aufstiegs: " + Ranks.Name(pc.rankIndex) + (string.IsNullOrEmpty(World.Quests.title) ? "" : " · Titel: „" + World.Quests.title + "“"), 16, Ui.TextColor);
             right.Text("Kaiserliche Erlaubnis für die Verbotenen Lande: " + (pc.permit ? "ja" : "nein"), 16, pc.permit ? Ui.Good : Ui.Dim);
 
             right.Space(8f);
@@ -263,7 +265,7 @@ namespace OmniGenesis
             Ui.Frame(map, Ui.Border, 1.5f);
 
             Marker(map, Places.CityPlaza, "Grad Genesis", Ui.Gold);
-            Marker(map, Places.TowerDoor, "Der Turm", new Color(0.5f, 0.85f, 1f));
+            Marker(map, Places.GuildHall, "Gildenhaus", new Color(0.6f, 0.9f, 0.6f));
             Marker(map, Places.ArenaCenter, "Arena", Ui.TextColor);
             Marker(map, Places.VillageCenter, World.Autonomy.IsAutonomous ? World.Autonomy.autonomyName : "Eichenhain", Ui.Good);
             Marker(map, Places.VillageGate, "Tor", new Color(0.4f, 0.75f, 1f));
@@ -276,8 +278,16 @@ namespace OmniGenesis
             Ui.Rect(new Rect(map.x, lineA.y, map.width, 2f), new Color(0.7f, 0.3f, 1f, 0.8f));
             Ui.Text(new Rect(map.x + 6f, lineA.y - 22f, 300f, 20f), "Grenze der Verbotenen Lande (Art. 112)", 13, new Color(0.85f, 0.6f, 1f));
 
+            foreach (var s in World.Quests.active)
+            {
+                if (s.Step == null || string.IsNullOrEmpty(s.Step.place)) continue;
+                Vector2 qp = MapPos(map, Quests.PlacePos(s.Step.place));
+                Ui.Rect(new Rect(qp.x - 7f, qp.y - 7f, 14f, 14f), Ui.Gold);
+                Ui.Frame(new Rect(qp.x - 9f, qp.y - 9f, 18f, 18f), Color.black, 2f);
+                Ui.Text(new Rect(qp.x + 10f, qp.y + 2f, 260f, 20f), s.def.title, 12, Ui.Gold);
+            }
+
             var pc = World.Player;
-            if (!World.Tower.InTower)
             {
                 Vector2 p = MapPos(map, pc.transform.position);
                 Ui.Rect(new Rect(p.x - 6f, p.y - 6f, 12f, 12f), Color.yellow);
@@ -333,10 +343,9 @@ namespace OmniGenesis
             switch (edictTab)
             {
                 case 0: DrawEdictText(view); break;
-                case 1: DrawChronicles(view); break;
-                case 2: DrawRanks(view); break;
-                case 3: DrawTreasury(view); break;
-                case 4: DrawList(view, Notify.Announcements, "Noch keine Verkündungen."); break;
+                case 1: DrawRanks(view); break;
+                case 2: DrawTreasury(view); break;
+                case 3: DrawList(view, Notify.Announcements, "Noch keine Verkündungen."); break;
                 default: DrawList(view, World.Law.record, "Dein Register ist rein."); break;
             }
         }
@@ -360,21 +369,6 @@ namespace OmniGenesis
             GUI.EndScrollView();
         }
 
-        void DrawChronicles(Rect view)
-        {
-            var ch = World.Tower.chronicles;
-            float w = view.width - 30f;
-            scroll = GUI.BeginScrollView(view, scroll, new Rect(0f, 0f, w, ch.Count * 28f + 60f));
-            Ui.Text(new Rect(0f, 0f, w, 24f), "Chroniken der Genesis — erste Bezwinger jeder Etage (Art. 114)", 16, Ui.Gold, TextAnchor.UpperLeft, true);
-            for (int i = 0; i < ch.Count; i++)
-            {
-                bool mine = !string.IsNullOrEmpty(ch[i]) && ch[i].StartsWith(World.Player.charName + " (Tag");
-                string name = string.IsNullOrEmpty(ch[i]) ? "— unbezwungen —" : ch[i];
-                Ui.Text(new Rect(0f, 34f + i * 28f, w, 26f), "Etage " + (i + 1).ToString("00") + (Tower.RequiredRank(i + 1) > 0 ? " (ab Rang " + Ranks.Name(Tower.RequiredRank(i + 1)) + ")" : "") + ":   " + name, 15, mine ? Ui.Good : string.IsNullOrEmpty(ch[i]) ? Ui.Dim : Ui.TextColor);
-            }
-            GUI.EndScrollView();
-        }
-
         void DrawRanks(Rect view)
         {
             var col = new Col(view);
@@ -387,7 +381,7 @@ namespace OmniGenesis
                 col.Text("Rang " + Ranks.Names[i] + ": ab Stufe " + Ranks.LevelReq[i] + by + (i == World.Player.rankIndex ? "   ◄ dein Rang" : ""), 17, Ranks.Color(i), i == World.Player.rankIndex);
             }
             col.Space(8f);
-            col.Text("Ukas des Throns zum Turm: Etage 11–20 ab Rang D, 21–30 ab C, 31–40 ab B, 41–50 ab A. Verbotene Lande: Erlaubnis ab Rang D.", 15, Ui.TextColor);
+            col.Text("Kaiserliche Erlaubnis für die Verbotenen Lande: ab Rang D in der Kanzlei (Art. 112). Ohne Rang beginnt die Geschichte nicht über Kapitel I hinaus.", 15, Ui.TextColor);
         }
 
         void DrawTreasury(Rect view)
@@ -400,7 +394,7 @@ namespace OmniGenesis
             col.Text("Ausgaben:", 15, Ui.Dim);
             foreach (var kv in t.expenses) col.Text("− " + kv.Key + ": " + kv.Value.ToString("N0"), 16, Ui.Bad);
             col.Space(8f);
-            col.Text("Handelsabgabe 10 % (Art. 93) · Turmanteil 10 % (Art. 115) · Miete und Abgabe (Art. 117) · Torgebühr " + GameConstants.GateFee + " Taler (Art. 34)", 14, Ui.Dim);
+            col.Text("Handelsabgabe 10 % (Art. 93) · Miete und Abgabe (Art. 117) · Gebühren und Bußgelder · Torgebühr " + GameConstants.GateFee + " Taler (Art. 34)", 14, Ui.Dim);
         }
 
         void DrawList(Rect view, System.Collections.Generic.List<string> list, string empty)
@@ -462,6 +456,58 @@ namespace OmniGenesis
                 Ui.Text(new Rect(row.x + 270f, row.y + 2f, row.width - 280f, 40f), need, 13, Ui.Dim);
             }
             GUI.EndScrollView();
+        }
+
+        // ---------- Aufträge und Geschichte ----------
+        void DrawQuests()
+        {
+            var q = World.Quests;
+            var area = Window(1240f, 860f, "AUFTRÄGE UND GESCHICHTE");
+            float half = area.width * 0.55f;
+            var left = new Rect(area.x, area.y, half - 20f, area.height);
+            float w = left.width - 24f;
+            float h = 40f;
+            foreach (var s in q.active) h += 60f + s.def.steps.Length * 26f + Ui.TextHeight(s.def.summary ?? "", 14, w);
+            scroll = GUI.BeginScrollView(left, scroll, new Rect(0f, 0f, w, Mathf.Max(h, left.height)));
+            var col = new Col(new Rect(0f, 0f, w, h));
+            col.Text("AKTIVE AUFTRÄGE", 17, Ui.Gold, true);
+            if (q.active.Count == 0) col.Text("Keine aktiven Aufträge. Achte auf ! über den Köpfen der Leute und auf das Auftragsbrett im Gildenhaus.", 15, Ui.Dim);
+            var list = new System.Collections.Generic.List<QuestState>(q.active);
+            list.Sort((a, b) => (b.def.main ? 1 : 0) - (a.def.main ? 1 : 0));
+            foreach (var s in list)
+            {
+                col.Text(s.def.title + (s.def.main ? "" : " — " + s.def.giver), 16, s.def.main ? Ui.Gold : Ui.TextColor, true);
+                if (!string.IsNullOrEmpty(s.def.summary)) col.Text(s.def.summary, 14, Ui.Dim);
+                for (int i = 0; i < s.def.steps.Length; i++)
+                {
+                    var st = s.def.steps[i];
+                    string mark = i < s.step ? "[x] " : i == s.step ? "► " : "[  ] ";
+                    string txt = i <= s.step ? st.text + (i == s.step ? s.ProgressText : "") : "???";
+                    if (st.night && i == s.step) txt += " (nur nachts)";
+                    col.Text(mark + txt, 14, i < s.step ? Ui.Good : i == s.step ? Ui.TextColor : Ui.Dim);
+                }
+                col.Space(8f);
+            }
+            GUI.EndScrollView();
+
+            var right = new Col(new Rect(area.x + half, area.y, area.width - half, area.height));
+            right.Text("DIE GESCHICHTE BISHER", 17, Ui.Gold, true);
+            bool any = false;
+            foreach (var def in QuestData.All)
+            {
+                if (!def.main || !q.IsDone(def.id)) continue;
+                any = true;
+                right.Text(def.title, 15, Ui.TextColor, true);
+                right.Text(def.completeText, 14, Ui.Dim);
+            }
+            if (!any) right.Text("Noch kein Kapitel abgeschlossen.", 14, Ui.Dim);
+            string hint = q.NextChapterHint;
+            if (hint != null) right.Text("Nächstes Kapitel: " + hint, 14, Ui.Gold);
+            right.Space(10f);
+            int side = 0;
+            foreach (var def in QuestData.All) if (!def.main && q.IsDone(def.id)) side++;
+            right.Text("Erfüllte Nebenaufträge: " + side + " · Titel: " + (string.IsNullOrEmpty(q.title) ? "—" : q.title), 14, Ui.Dim);
+            right.Text("Gildenaufträge gibt es täglich bei Runa im Gildenhaus östlich der Stadt (Art. 121). Jagdaufträge gibt es nur für Arten mit gesundem Bestand.", 14, Ui.Dim);
         }
 
         // ---------- Pause ----------

@@ -97,7 +97,6 @@ namespace OmniGenesis
         public void Arrest()
         {
             var pc = World.Player;
-            if (World.Tower != null && World.Tower.InTower) World.Tower.Leave(false);
             World.Clock.Advance(24f * 60f);
             int fine = PendingFine;
             int paid = Mathf.Min(fine, pc.taler);

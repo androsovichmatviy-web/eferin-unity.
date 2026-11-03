@@ -1,89 +1,191 @@
-# Дар Вечности: Эферин — Unity
+# Omni Genesis
 
-3D экшен-RPG в стиле Genshin Impact на Unity (URP) по миру из пролога «Дар Вечности: Пролог Мира».
-Unity-версия веб-прототипа из репозитория `shadows-game`.
+**Eine lebendige Simulationswelt nach dem Kaiserlichen Edikt — Unity 6 (URP), C#.**
 
-Пока это **прототип-заготовка**: весь мир, персонажи и враги собираются кодом из простых фигур, интерфейс
-нарисован через IMGUI. Модели, анимации и нормальный UI добавим следующими шагами.
+*Ein Kontinent. Ein Thron. Ein Gesetz.*
 
-## Что нужно
+Omni Genesis ist eine offene Sandbox-Welt ohne aufgezwungene Quests. Die Welt läuft nach eigenen Regeln:
+Tiere vermehren sich und sterben, Preise steigen und fallen mit Angebot und Nachfrage, das Siegel des Risses
+wird schwächer, Wachen verfolgen Verbrecher. Grundlage ist das **Kaiserliche Edikt von Omni Genesis**
+(166 Artikel). Viele Artikel sind direkt als Spielmechanik umgesetzt. Im Spiel öffnet die Taste **J** die Auszüge des Edikts,
+jeweils mit dem Hinweis, welche Mechanik sie umsetzt.
 
-- Unity Hub + **Unity 6 LTS** (подойдёт и 2022.3 LTS)
-- Шаблон проекта **Universal 3D (URP)**
+Das große Ziel (Art. 127): ein eigener Teil des Reiches, die **Autonomie**. Dafür muss der Prätendent
+**so stark sein wie Kaiser Mortem Underwood (Stufe 100)**, und **alle Einwohner** des Landes müssen ihn respektieren.
 
-## Первый запуск
+---
 
-1. **Создайте проект.** В Unity Hub: Projects → New project → шаблон **Universal 3D** (в 2022.3 он называется **3D (URP)**) → назовите `eferin-unity`.
-2. **Добавьте скрипты.** Скопируйте папку `Assets/Scripts` из этого репозитория в папку `Assets` проекта
-   (или подключите проект к git — см. ниже).
-3. **Создайте сцену.** File → New Scene → **Basic (URP)** → Create. Сохраните как `Assets/Scenes/Eferin.unity`.
-4. **Добавьте точку входа.** GameObject → Create Empty, назовите `Game`. В Inspector: Add Component → **GameBootstrap**.
-5. Нажмите **Play**.
+## Installation
 
-Больше ничего настраивать не нужно: `GameBootstrap` сам строит рельеф, побережье, деревья, свет, игрока,
-камеру, врагов и интерфейс.
+Voraussetzung: **Unity 6 LTS** mit der Vorlage **Universal 3D (URP)**.
 
-## Управление
+1. Unity Hub → *New project* → **Universal 3D** → Projekt anlegen.
+2. Den Ordner `Assets/OmniGenesis` aus diesem Repository in den Ordner `Assets` des Projekts kopieren
+   (oder das Projekt mit Git verbinden, siehe unten).
+3. In Unity im Menü **Omni Genesis → Projekt einrichten** klicken.
+   Das legt die Szenen `Hauptmenue` und `Welt` an und trägt sie in die Build Settings ein
+   (nötig für das asynchrone Laden).
+4. **Play** drücken.
 
-| Клавиша | Действие |
-|---|---|
-| WASD | ходьба |
-| Shift | бег (тратит выносливость) |
-| Пробел | прыжок / далее в диалоге |
-| ЛКМ | обычная атака |
-| E | стихийный навык |
-| Q | взрыв стихии (когда накоплена энергия) |
-| 1–5 | переключение персонажа в отряде |
-| Мышь | камера, колесо — приближение |
-| Alt (удерживать) | показать курсор |
-| C | архив мира |
+Mehr ist nicht nötig. Welt, Gebäude, Figuren, Tiere und Oberfläche werden beim Start aus Code erzeugt.
+Die Eingabe funktioniert mit dem alten Input Manager und mit dem neuen Input System.
+Im Menü **Omni Genesis → Spielstand löschen** wird der Spielstand zurückgesetzt.
 
-## Механики
-
-- Отряд из 5 странников: **Странник** (Ветер), **Эйла** (Гром), **Мал** (Пламя), **Сая** (Иней), **Тиль** (Поток).
-  Если активный персонаж падает, управление переходит к следующему; если пали все — отряд возвращается на берег.
-- Элементальные реакции: Испарение, Плавление, Перегрузка, Наэлектризация, Заморозка, Сверхпроводимость,
-  Развеивание (Ветер разносит стихию на соседних врагов).
-- Враги-Забытые: обычные «Клинки» и «Носители» с врождённой стихией, которая восстанавливается после реакции.
-- Пролог с эффектом печатной машинки и архив лора.
-
-## Подключить проект к этому репозиторию
-
-В папке созданного Unity-проекта:
+### Projekt mit Git verbinden
 
 ```bash
 git init -b main
 git remote add origin https://github.com/androsovichmatviy-web/eferin-unity.
 git pull origin main
-git add .
-git commit -m "Add Unity project files"
-git push -u origin main
 ```
 
-Если вы уже скопировали `Assets/Scripts` вручную (например, из архива), закройте Unity и удалите эту папку
-перед `git pull` — иначе git откажется перезаписывать совпадающие файлы.
+`.meta`-Dateien werden mit eingecheckt, `Library/`, `Temp/` usw. sind in `.gitignore` ausgeschlossen.
 
-`.gitignore` уже исключает служебные папки Unity (`Library/`, `Temp/`, `Logs/` и т.д.). Файлы `.meta`
-коммитить **нужно** — без них ломаются ссылки между ассетами.
+---
 
-## Структура
+## Steuerung
+
+| Taste | Aktion |
+|---|---|
+| WASD · Shift · Leertaste | Laufen · Sprinten · Springen |
+| Maus · LMB | Umsehen · Angriff (gedrückt halten) |
+| Q / E / R | Klassenfähigkeiten (R ab Stufe 50 mit Hybridklasse) |
+| 1 / 2 / 3 | Heiltrank · Ätherelixier · Gebratenes Fleisch |
+| F | Interagieren (Sprechen, Sammeln, Ausweiden, Tore, Bett …) |
+| **V** | **Ich-Perspektive ↔ dritte Person** |
+| C · I · M · J · P | Charakter · Inventar/Handwerk · Karte · Edikt · Drei Säulen |
+| G | Sich dem Gericht stellen (wenn gesucht) |
+| F5 · Esc | Schnellspeichern · Menü |
+| Alt (halten) | Mauszeiger freigeben |
+| F1–F4, F6 | nur im **Demo-Modus**: +5 Stufen · +5000 Taler · +6 Stunden · Respekt +25 · Siegel −30 % |
+
+Der **Demo-Modus** wird bei der Charaktererstellung gewählt. Damit lassen sich bei einer Präsentation alle Systeme
+in wenigen Minuten zeigen, bis hin zum Vertrag mit dem Kaiser.
+
+---
+
+## Systeme
+
+### Physikalisches Kampfsystem: F = m · a
+
+Jeder Treffer wird physikalisch berechnet (`Core/Phys.cs`). Das Kampfprotokoll unten links zeigt die Rechnung live.
+
+| Angriff | Rechnung |
+|---|---|
+| Nahkampf | Spitzengeschwindigkeit `v = θ · L / t`, Beschleunigung `a = v / t` (+ `v_Anlauf / t`), **`F = m_Waffe · a`**, Schaden = `F · 0,5` |
+| Stärke | verkürzt die Schwungzeit `t = t₀ / (1 + 0,01 · Stärke)`, kleineres t ergibt größeres a |
+| Bogen | Sehnenkraft auf den Pfeil: `a = F / m`, aus `v² = 2 · a · d` folgt `v = √(2 · F · d / m)`, Schaden aus `E = ½ · m · v²` beim Aufprall (mit Schwerkraft) |
+| Äther | Äthermasse × Beschleunigung durch Intelligenz: `F = m_Äther · a` |
+| Tiere | Körpermasse × Sprungbeschleunigung, der Sprung ist ein echter Impuls `J = m · Δv` |
+| Rückstoß | `J = F · Δt`, Geschwindigkeitsänderung des Ziels `Δv = J / m_Ziel` |
+| Bewegung der Tiere | `F = m · (v_soll − v) / τ`, das ist F = m · a mit a = Δv / τ (Rigidbody.AddForce) |
+
+Die Masse der Ausrüstung zählt mehrfach: Schwere Waffen treffen härter, Rüstung und Inventar wiegen,
+und wer über der Traglast liegt, wird langsamer.
+
+### Rassen und Klassen (Art. 11, 24, 48)
+
+* Rassen: **Mensch, Zwerg, Elf**. Jede Rasse hat dieselbe Summe an Boni (Art. 24: Gleichheit).
+* Klassen: **Novize, Schwertkämpfer, Kampfmagier, Bogenschütze, Assassine, Berserker**. Alle nutzen dieselbe
+  Datenstruktur und dasselbe Budget (24 Startpunkte, 4 Wachstumspunkte je Stufe).
+* Ab **Stufe 50** kommt eine zweite Klasse hinzu. Beide zusammen ergeben eine **Hybridklasse** mit eigener Fähigkeit [R]:
+
+| Kombination | Hybrid | Fähigkeit |
+|---|---|---|
+| Schwertkämpfer + Kampfmagier | Runenritter | Runenklinge |
+| Schwertkämpfer + Bogenschütze | Wächter | Schildwall |
+| Schwertkämpfer + Assassine | Duellant | Konter |
+| Schwertkämpfer + Berserker | Kriegsherr | Kriegsschrei |
+| Kampfmagier + Bogenschütze | Arkanschütze | Ätherpfeil |
+| Kampfmagier + Assassine | **Nekromant** | Totenruf (erhebt Leichen kurz als Diener) |
+| Kampfmagier + Berserker | Blutmagier | Blutlanze (kostet Leben statt Äther) |
+| Bogenschütze + Assassine | **Kopfgeldjäger** | Kopfgeld (die Kasse zahlt beim Tod des Ziels) |
+| Bogenschütze + Berserker | Wildjäger | Zähmen (dauerhafter Tierbegleiter) |
+| Assassine + Berserker | Klingentänzer | Klingentanz |
+| Novize + beliebig | Pionier | Weg des Pioniers |
+
+### Lebendige Welt
+
+* **Tag/Nacht und Wetter**: 1 Spieltag = 24 Minuten. Das Wetter (klar, bewölkt, Regen, Gewitter, Nebel) ist eine Markow-Kette
+  und wirkt auf Licht, Sichtweite, Wachstum, Bogenschüsse und Handel.
+* **Ökosystem**: Grasläufer, Wildeber, Grauwölfe, Steinkriecher. **Getötete Tiere kehren nie zurück.** Bestände wachsen
+  nur durch Nachwuchs der Überlebenden (logistisches Wachstum bis zur Tragfähigkeit K). Wölfe jagen Grasläufer,
+  ohne Beute verhungern sie. Stirbt eine Art aus, können Tiere aus Nachbarprovinzen zuwandern (abschaltbar).
+* **Ausnahme laut Geschichte**: Risswesen und der *Wächter des Risses* kehren zurück, solange das Siegel schwach ist.
+* **Ressourcen und Handwerk**: Holz, Stein, Erz, Heilkraut, Ätherkristalle. Abgebaute Knoten wachsen nach (bei Regen schneller).
+  Metall wird am Amboss der Schmiede verarbeitet (Zwerge erhalten einen Barren extra).
+* **Wirtschaft**: Preise folgen Angebot und Nachfrage. Jäger, Holzfäller, Schmiede und Alchemisten produzieren stündlich.
+  Das Fleischangebot hängt am **echten Wildbestand**: Wer überjagt, macht Fleisch teuer.
+  Einheitliche Abgabe von 10 % an die **Kaiserliche Kasse** (Art. 93).
+
+### Das Edikt als Regelwerk
+
+* **Grad Genesis** (Kronendomäne): Thronsaal mit Kaiser **Mortem Underwood**, Kanzlei und Gericht mit
+  **Richter Ataklas**, Markt, Schmiede, Mietshaus (Art. 116), Kaiserliches Lazarett (Art. 45).
+* **Große Tore** (Art. 34, 54): Schnellreise für eine einheitliche Gebühr, außerdem Verkündungen.
+* **Recht** (Art. 27–29, 57, 58, 62): Angriffe werden gemeldet, Wachen verfolgen den Täter, das Gericht urteilt binnen drei Tagen.
+  Ein Angriff auf den Kaiser ist **Großer Verrat** und verwirkt den Weg zur Autonomie für immer.
+* **Verbotene Lande** (Art. 112): nur mit Kaiserlicher Erlaubnis (ab Rang D), bewacht vom Orden der Kampfmagier.
+  Dort liegt das **Siegel der Eindämmung** (Art. 16). Wer es mit Ätherkristallen verstärkt, erfüllt seine Bürgerpflicht (Art. 60).
+  Fällt es unter 15 %, folgt der **Große Aufruf** (Art. 66).
+* **Ränge des Aufstiegs** F bis SSS (Art. 48, 69): Prüfung in der Arena, die Ränge S und höher verleiht der Kaiser.
+  Ohne Rang öffnet der Turmhüter den Turm nicht.
+* **Der Turm** (Art. 113–115): 50 prozedurale Etagen, Wächter auf jeder 10. Etage, **Chroniken der Genesis**
+  mit dem ersten Bezwinger jeder Etage, 10 % der Beute an die Kasse.
+
+### Weg der Diplomatie (Abschnitt X)
+
+Ziel ist das Dorf **Eichenhain** als eigene Autonomie. Fenster **P**:
+
+1. **Würdig an Kraft**: Stufe ≥ Stufe des Kaisers (100).
+2. **Würdig an Seele**: kein Großer Verrat, keine offene Schuld.
+3. **Säule der Ressourcen**: 20 000 Taler, Vorräte (Nahrung, Holz, Eisen) und ein gesunder Wildbestand.
+4. **Säule des Volkes**: **alle 12 Einwohner** respektieren dich. Respekt gibt es für Schutz vor Raubtieren und
+   Leerenbrut und für erfüllte Bedürfnisse, Verbrechen kosten Respekt.
+5. **Säule der Souveränität**: 4 Dorfwachen (mit Sold), ein Gesetzbuch mit mindestens 3 Gesetzen
+   (der Freie Weg ist Pflicht) und ein gebautes Rathaus.
+
+Dann folgen: Petition bei Richter Ataklas → Revision durch die Arbiter (3 Tage) → **Audienz zur festgesetzten Stunde**
+(wer sie verpasst, verliert die Petition) → **Prüfung des Blicks** → Vertrag mit Name und Wappenfarbe.
+Fällt danach eine Säule, schickt der Thron eine Vorwarnung mit Frist und löst den Vertrag sonst auf (Art. 140).
+
+---
+
+## Projektstruktur
 
 ```
-Assets/Scripts/
-  GameBootstrap.cs        точка входа: собирает всю сцену
-  Core/                   стихии, таблица реакций, ввод, состояние игры, материалы
-  Party/                  данные персонажей и отряд
-  Player/                 движение, камера от третьего лица, внешний вид
-  Combat/                 атака / навык / взрыв, визуальные эффекты
-  Enemies/                враги и их размещение
-  World/                  генерация мира и освещения
-  UI/                     HUD, диалог-пролог, архив
+Assets/OmniGenesis/
+  Scenes/        Hauptmenue.unity, Welt.unity (werden per Menü erzeugt)
+  Scripts/
+    Core/        Regeln (GameConstants), Eingabe, Spielstand, Physik F = m·a, Lebenspunkte
+    Data/        Rassen, Klassen und Hybride, Gegenstände und Rezepte, Tierarten
+    Player/      Charakter, Bewegung, Kamera (1./3. Person), Kampf, Interaktion, Figur
+    Combat/      Geschosse, Effekte
+    World/       Gelände, Weltbau, Uhr, Wetter, Ressourcen, Turm, Rangprüfung
+    Ecosystem/   Lebewesen (Rigidbody-KI), Populationen, Riss und Siegel
+    Society/     NPCs, Markt und Kasse, Recht, Einwohner, Autonomie, Edikt-Texte
+    UI/          HUD, Systemfenster, Dialoge, Hauptmenü, Ladebildschirm „Lade Welt… %“
+    Bootstrap/   WorldBootstrap: baut die Welt Schritt für Schritt
+    Editor/      Menü „Omni Genesis → Projekt einrichten“
+  Prefabs/  Art/  Audio/  UI_Assets/   für spätere Modelle, Klänge und Grafiken
 ```
 
-Ввод работает и со старым Input Manager, и с новым Input System (Unity 6 по умолчанию включает только новый).
+Alle Zahlen des Regelwerks (Kaiserstufe, Respektschwelle, Abgaben, Gebühren, Physikfaktoren) stehen gesammelt in
+`Scripts/Core/GameConstants.cs`.
 
-## Статус проверки
+## Stand
 
-Скрипты собраны компилятором C# против заглушек API Unity (в обоих режимах ввода), таблица реакций
-протестирована отдельно. **В самом редакторе Unity проект ещё не запускался** — если в консоли Unity
-появятся ошибки, пришлите их текст.
+* Alle Skripte kompilieren fehlerfrei gegen die Unity-Referenzassemblies, mit altem Input Manager und mit Input System.
+* **Im Unity-Editor wurde das Spiel noch nicht gestartet.** Falls Fehler in der Konsole erscheinen, bitte den Text schicken.
+* Grafik und Figuren sind Platzhalter aus Grundkörpern. Eigene Modelle und Klänge kommen nach `Art/` und `Audio/`.
+* Nächster Schritt: **Weg des Krieges** (Abschnitt XI: Manifest, Vorbereitungszeit, Feld der Prüfung, Duell des Throns).
+
+---
+
+### Кратко по-русски
+
+1. Unity Hub → New project → **Universal 3D (URP)**, Unity 6.
+2. Скопируйте `Assets/OmniGenesis` в папку `Assets` проекта.
+3. В Unity выберите меню **Omni Genesis → Projekt einrichten**. Создадутся сцены и Build Settings.
+4. Нажмите **Play**. Камера переключается клавишей **V** (от первого или третьего лица), справочник по Эдикту открывается на **J**,
+   Три Столпа на **P**. Для показа на защите при создании персонажа включите **Demo-Modus**: тогда работают клавиши F1–F6.

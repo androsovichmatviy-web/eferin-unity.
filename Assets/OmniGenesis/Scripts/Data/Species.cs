@@ -48,7 +48,7 @@ namespace OmniGenesis
             {
                 id = "graslaeufer", name = "Grasläufer", diet = Diet.Pflanzenfresser, temper = Temper.Scheu, shape = BodyShape.Vierbeiner,
                 mass = 45f, hp = 50f, speed = 6.5f, attackAccel = 0f, aggroRange = 12f, size = 1f,
-                capacity = 22, initial = 16, breedChancePerHour = 0.1f, exp = 15,
+                capacity = 22, initial = 16, breedChancePerHour = 0.12f, exp = 15,
                 drops = new[] { "fleisch", "fell" }, dropCounts = new[] { 2, 1 },
                 habitat = new Vector2(-40f, -10f), habitatRadius = 75f, color = new Color(0.72f, 0.55f, 0.35f),
             },

@@ -203,6 +203,8 @@ namespace OmniGenesis
                 var item = Items.Get(g.id);
                 if (item.category == ItemCategory.Waffe || item.category == ItemCategory.Ruestung) Change(g.id, 0.05f * prod - 0.04f);
             }
+            // Händler gleichen Überschuss und Mangel langsam über das Handelsnetz aus.
+            foreach (var g in goods) Change(g.id, (g.target - g.stock) * 0.03f);
         }
 
         public void Save(SaveData d)

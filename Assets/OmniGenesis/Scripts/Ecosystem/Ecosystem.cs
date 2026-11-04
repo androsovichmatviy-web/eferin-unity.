@@ -87,8 +87,38 @@ namespace OmniGenesis
             return c;
         }
 
+        // Fern vom Spieler ruht die KI (Creature.Update). Dort jagen Raubtiere abstrakt, damit sie nicht verhungern.
+        void OffscreenHunt()
+        {
+            var player = World.Player;
+            System.Func<Creature, bool> far = c => player == null || (c.transform.position - player.transform.position).magnitude > 140f;
+            System.Func<Creature, bool> unseen = c => player == null || (c.transform.position - player.transform.position).magnitude > 60f;
+            var prey = new List<Creature>();
+            foreach (var kv in pop)
+            {
+                var d = Species.Get(kv.Key);
+                if (d.diet != Diet.Pflanzenfresser || d.temper != Temper.Scheu) continue;
+                foreach (var c in kv.Value) if (c != null && !c.IsCorpse && unseen(c)) prey.Add(c);
+            }
+            var hunters = new List<Creature>();
+            foreach (var kv in pop)
+                if (Species.Get(kv.Key).diet == Diet.Fleischfresser)
+                    foreach (var w in kv.Value) if (w != null && !w.IsCorpse && w.hunger >= 0.6f && far(w)) hunters.Add(w);
+            foreach (var w in hunters)
+            {
+                if (prey.Count == 0) break;
+                float st = Mathf.Min(1f, StockFraction("graslaeufer"));
+                if (Random.value >= 0.3f * st * st) continue;   // Jagderfolg sinkt stark, wenn Beute knapp ist
+                int k = Random.Range(0, prey.Count);
+                var victim = prey[k];
+                prey.RemoveAt(k);
+                victim.Health.Apply(new DamageInfo { amount = victim.Health.maxHp * 10f, point = victim.Health.Center, source = w.Health });
+            }
+        }
+
         void OnHour(int day, int hour)
         {
+            OffscreenHunt();
             bool huntProtection = World.Autonomy != null && World.Autonomy.HasLaw("jagdschutz");
             foreach (var kv in pop)
             {
@@ -104,7 +134,7 @@ namespace OmniGenesis
                     if (!c.IsJuvenile) adults++;
                     if (def.diet == Diet.Fleischfresser)
                     {
-                        c.hunger = Mathf.Min(1f, c.hunger + 1f / 30f);
+                        c.hunger = Mathf.Min(1f, c.hunger + 1f / 40f);
                         hungerSum += c.hunger;
                         if (c.hunger >= 1f)
                         {

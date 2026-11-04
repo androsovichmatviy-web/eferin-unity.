@@ -15,6 +15,22 @@ Die Hauptgeschichte erzählt von einer **Meuterei gegen das Edikt** (sechs Kapit
 
 ---
 
+## 2D-Version im Browser (`web2d/`)
+
+Dasselbe Spiel mit Blick von oben, direkt im Browser spielbar, auch auf dem Handy (virtueller Stick und Touch-Knöpfe).
+Gleiche Welt, gleiche Regeln: Physik F = m · a, Klassen und Hybride, Ökosystem, Markt, Recht, Siegel des Risses,
+Prüfung der Meisterschaft, Hauptgeschichte, Neben- und Gildenaufträge, Weg der Diplomatie.
+
+* Starten: `web2d/index.html` über einen beliebigen lokalen Webserver öffnen, z. B. `python3 -m http.server --directory web2d`
+  und dann `http://localhost:8000` aufrufen. (Die Datei beginnt ohne `<!doctype>`, weil sie auch als Seite auf claude.ai veröffentlicht wird.)
+* Spielstand: im `localStorage` des Browsers.
+* Aufbau: `js/util.js` (Rauschen, Eingabe), `data.js` (Regelwerk, Geschichte, Edikt), `world.js` (Gelände, Gebäude),
+  `entities.js` (Spieler, Physik), `actors.js` (Tiere, NPCs), `systems.js` (Uhr, Wetter, Ökosystem, Markt, Recht, Siegel, Einwohner),
+  `society.js` (Autonomie, Rangprüfung, Aufträge), `render.js`, `ui.js`, `main.js`.
+* Ferne Raubtiere jagen abstrakt weiter (ihre KI ruht außerhalb von 140 m), damit das Ökosystem auch ohne den Spieler stabil bleibt.
+
+---
+
 ## Installation
 
 Voraussetzung: **Unity 6 LTS** mit der Vorlage **Universal 3D (URP)**.

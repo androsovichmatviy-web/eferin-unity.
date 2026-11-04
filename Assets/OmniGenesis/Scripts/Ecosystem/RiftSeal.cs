@@ -75,7 +75,9 @@ namespace OmniGenesis
 
         void OnHour(int day, int hour)
         {
-            float order = Strength > 20f ? 1.5f : 0.3f;   // der Orden der Kampfmagier hält dagegen
+            // Der Orden der Kampfmagier hält das Siegel bei etwa 55 %. Unter 20 % ist er überfordert.
+            // Während des Großen Aufrufs hilft das ganze Reich: das Siegel erholt sich langsam (+0,5 %/Std.).
+            float order = Summons ? 2.5f : Strength > 20f ? (Strength < 55f ? 2.4f : 1.6f) : 0.3f;
             Strength = Mathf.Clamp(Strength - 2f + order, 0f, 100f);
             if (Random.value < 0.012f)
             {

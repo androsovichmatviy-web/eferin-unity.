@@ -172,15 +172,15 @@ OG.Eco = {
       }
     }
   },
-  // Fern vom Spieler ruht die KI. Dort jagen Raubtiere abstrakt, damit sie nicht verhungern.
+  // Außer Sicht des Spielers jagen Raubtiere abstrakt (fern vom Spieler ruht ihre KI ganz), damit sie nicht verhungern.
   offscreenHunt() {
-    const P = OG.player, far = e => Math.hypot(e.x - P.x, e.y - P.y) > 140, unseen = e => Math.hypot(e.x - P.x, e.y - P.y) > 45;
+    const P = OG.player, unseen = e => Math.hypot(e.x - P.x, e.y - P.y) > 45;
     const prey = [];
     for (const id in this.pop) { const d = OG.Species[id]; if (d.diet === 'Pflanzenfresser' && d.temper === 'Scheu') for (const c of this.pop[id]) if (!c.corpse && !c.removed && unseen(c)) prey.push(c); }
     for (const id in this.pop) {
       if (OG.Species[id].diet !== 'Fleischfresser') continue;
       for (const w of this.pop[id].slice()) {
-        if (w.corpse || w.removed || w.hunger < 0.6 || !far(w) || !prey.length) continue;
+        if (w.corpse || w.removed || w.hunger < 0.6 || !unseen(w) || !prey.length) continue;
         const st = Math.min(1, this.stock('graslaeufer'));
         if (Math.random() < 0.3 * st * st) {   // Jagderfolg sinkt stark, wenn Beute knapp ist
           const v = prey.splice(Math.floor(Math.random() * prey.length), 1)[0];

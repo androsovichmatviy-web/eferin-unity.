@@ -91,7 +91,6 @@ namespace OmniGenesis
         void OffscreenHunt()
         {
             var player = World.Player;
-            System.Func<Creature, bool> far = c => player == null || (c.transform.position - player.transform.position).magnitude > 140f;
             System.Func<Creature, bool> unseen = c => player == null || (c.transform.position - player.transform.position).magnitude > 60f;
             var prey = new List<Creature>();
             foreach (var kv in pop)
@@ -103,7 +102,7 @@ namespace OmniGenesis
             var hunters = new List<Creature>();
             foreach (var kv in pop)
                 if (Species.Get(kv.Key).diet == Diet.Fleischfresser)
-                    foreach (var w in kv.Value) if (w != null && !w.IsCorpse && w.hunger >= 0.6f && far(w)) hunters.Add(w);
+                    foreach (var w in kv.Value) if (w != null && !w.IsCorpse && w.hunger >= 0.6f && unseen(w)) hunters.Add(w);
             foreach (var w in hunters)
             {
                 if (prey.Count == 0) break;

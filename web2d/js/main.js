@@ -67,9 +67,14 @@ OG.generate = function* (d) {
   }
   yield [0.96, 'Die Geschichte beginnt…'];
   OG.QuestSys.init(d.quests);
+  OG.pvp = Object.assign({ kills: 0, innocents: 0, outlaws: 0, duelsWon: 0, duelsLost: 0, deaths: 0 }, d.pvp || {});
+  OG.duel = null;
+  OG.drawHooks = OG.drawHooks.filter(f => f.keep);
+  OG.Rivals.init(d.rivals);
+  OG.Secrets.init(d.secrets);
   OG.Clock.onDay.push(() => OG.save(true));
   if (!d.worldInit) {
-    OG.sys('Willkommen in Grad Genesis, ' + OG.player.charName + '. Deine Aufträge findest du unter L, die Gesetze dieser Welt im Edikt (J).');
+    OG.sys('Willkommen in Grad Genesis, ' + OG.player.charName + '. Die Geschichte ist freiwillig: Richter Ataklas in der Kanzlei (!) hat das erste Kapitel. Du kannst aber auch einfach leveln, jagen und dich mit anderen Reisenden messen.');
     OG.sys('Ziel nach Art. 127: eine eigene Autonomie. Werde so stark wie der Kaiser (Stufe 100) und gewinne den Respekt aller Einwohner von Eichenhain (P).');
     OG.announce('Der Thron der Genesis grüßt alle Reisenden. Ein Kontinent. Ein Thron. Ein Gesetz.');
   } else OG.sys('Willkommen zurück, ' + OG.player.charName + '. ' + OG.Clock.stamp() + '.');
@@ -127,8 +132,9 @@ OG.onPlayerDowned = () => {
   const P = OG.player;
   if (OG.Trial.active) { P.hp = P.maxHp * 0.3; OG.Trial.playerDowned(); return; }
   if (OG.Law.wanted > 0) { P.hp = P.maxHp * 0.5; OG.Law.arrest(); return; }
-  const lost = Math.round(P.taler * 0.1);
-  P.taler -= lost; P.hp = P.maxHp; P.aether = P.maxAether; P.vx = P.vy = 0;
+  let lost = Math.round(P.taler * 0.1);
+  P.taler -= lost;
+  lost = OG.Rivals.onPlayerDowned(P, lost); P.hp = P.maxHp; P.aether = P.maxAether; P.vx = P.vy = 0;
   OG.Clock.advance(120);
   P.x = OG.Places.lazarett.x; P.y = OG.Places.lazarett.y;
   OG.sys('Du bist gefallen. Die Heiler des Kaiserlichen Lazaretts haben dich gerettet (Art. 45). Verlust: ' + lost + ' Taler.');
@@ -146,6 +152,7 @@ OG.buildSave = () => {
     },
     eco: OG.Eco.save(), nodes: OG.Nodes.save(), market: OG.Market.save(), treasury: OG.Treasury.save(), law: OG.Law.save(), rift: OG.Rift.save(),
     residents: OG.Residents.save(), autonomy: OG.Autonomy.save(), quests: OG.QuestSys.save(),
+    rivals: OG.Rivals.save(), pvp: OG.pvp, secrets: OG.Secrets.save(),
   };
 };
 OG.save = silent => {
@@ -162,6 +169,8 @@ OG.update = dt => {
   OG.Law.update(dt);
   OG.Trial.update();
   OG.QuestSys.update(dt);
+  OG.Rivals.update();
+  OG.Secrets.update(dt);
 
   for (const e of OG.ents) if (!e.removed) e.update(dt);
   // Figuren schieben sich sanft auseinander
@@ -240,8 +249,10 @@ OG.menuFrame = () => {
   const t = performance.now() / 1000;
   for (const [x, y, s] of OG.menuStars) { c.fillStyle = 'rgba(255,245,220,' + (0.3 + 0.5 * Math.abs(Math.sin(t * s + x * 10))) + ')'; c.fillRect(x * W, y * H, 1.5 * R.dpr, 1.5 * R.dpr); }
   const cx = W * 0.72, cy = H * 0.5, r = Math.min(W, H) * 0.32;
-  c.save(); c.translate(cx, cy); c.rotate(t * 0.05);
-  c.globalAlpha = 0.18; OG.drawStar(c, 0, 0, r, '#f2c14d');
+  const boost = OG.menuStarBoost ? OG.clamp01(1 - (performance.now() - OG.menuStarBoost) / 5000) : 0;
+  OG.menuStarAngle = (OG.menuStarAngle || 0) + 0.0008 + boost * 0.05;
+  c.save(); c.translate(cx, cy); c.rotate(OG.menuStarAngle);
+  c.globalAlpha = 0.18 + boost * 0.6; OG.drawStar(c, 0, 0, r, '#f2c14d');
   c.globalAlpha = 0.4; c.strokeStyle = '#f2c14d'; c.lineWidth = 1.5 * R.dpr; c.beginPath(); c.arc(0, 0, r * 1.1, 0, Math.PI * 2); c.stroke();
   c.restore(); c.globalAlpha = 1;
 };

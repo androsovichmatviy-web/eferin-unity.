@@ -60,6 +60,7 @@ OG.R = {
     for (const n of OG.Nodes.list) if (this.inView(v, n.x, n.y, 3)) this.drawNode(n, false);
     for (const s of OG.interactables) if (s.clue && this.inView(v, s.x, s.y, 2)) this.drawClue(s);
     this.drawSeal();
+    for (const f of OG.drawHooks || []) f(ctx, v);
     for (const b of OG.World.buildings) if (b.inside) this.drawInterior(b);
 
     // Figuren nach y sortiert
@@ -397,7 +398,14 @@ OG.R = {
         const mark = OG.QuestSys.hasTurnIn(e.npcName) ? '?' : OG.QuestSys.hasOffer(e.npcName) ? '!' : null;
         if (mark) { c.font = '700 ' + (26 * dpr) + 'px "Grenze Gotisch", serif'; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillText(mark, sx + dpr, sy - 22 * dpr + dpr); c.fillStyle = '#f2c14d'; c.fillText(mark, sx, sy - 22 * dpr); }
       }
-      const show = !e.invulnerable && (e.frac < 1 || (e instanceof OG.Creature && e.hostile && d < 28));
+      if (e instanceof OG.Rival && d < 22) {
+        const col = e.duel ? '#f2c14d' : e.outlaw ? '#ff6b5e' : '#9fc8ff';
+        c.font = '600 ' + (12 * dpr) + 'px "Barlow Semi Condensed", sans-serif';
+        const label = e.name + ' · ' + e.level + (e.outlaw ? ' · Gesetzlos' : '');
+        c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillText(label, sx + dpr, sy + dpr);
+        c.fillStyle = col; c.fillText(label, sx, sy);
+      }
+      const show = !e.invulnerable && (e.frac < 1 || (e instanceof OG.Creature && e.hostile && d < 28) || (e instanceof OG.Rival && (e.outlaw || e.duel || e.target === P) && d < 22));
       if (show && d < 30) {
         const bw = 44 * dpr, bh = 5 * dpr;
         c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(sx - bw / 2, sy + 8 * dpr, bw, bh);

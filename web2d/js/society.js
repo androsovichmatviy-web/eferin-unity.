@@ -233,7 +233,7 @@ OG.QuestSys = {
     for (const q of OG.Quests) {
       if (!q.main || this.done.includes(q.id) || this.isActive(q.id)) continue;
       if (q.requires && !this.done.includes(q.requires)) return null;
-      return q.title + ' — ab Stufe ' + q.minLevel;
+      return q.title + ' — ab Stufe ' + q.minLevel + ', bei ' + q.giver;
     }
     return null;
   },
@@ -246,11 +246,12 @@ OG.QuestSys = {
     if (st.type === 'Seal') return ' (' + Math.round(OG.Rift.strength) + '/' + st.count + ' %)';
     return '';
   },
-  autoStart() { for (const q of OG.Quests) if (q.main && this.available(q)) this.accept(q); },
-  offersFrom(npc) { return OG.Quests.filter(q => !q.main && q.giver === npc && this.available(q)); },
+  // Die Geschichte ist freiwillig: Kapitel bieten ihre Auftraggeber an, nichts startet von selbst.
+  autoStart() {},
+  offersFrom(npc) { return OG.Quests.filter(q => q.giver === npc && this.available(q) && (!q.main || !this.active.some(s => s.def.main))); },
   hasOffer(npc) {
     if (npc === 'Runa' && this.offered.length && this.activeContracts() < 3) return true;
-    return OG.Quests.some(q => !q.main && q.giver === npc && this.available(q));
+    return this.offersFrom(npc).length > 0;
   },
   hasTurnIn(npc) { return this.active.some(s => { const st = this.step(s); return st && ((st.type === 'Talk' && st.target === npc) || (st.type === 'Deliver' && st.npc === npc)); }); },
   talkSteps(npc) { return this.active.filter(s => { const st = this.step(s); return st && st.type === 'Talk' && st.target === npc; }); },

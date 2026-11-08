@@ -13,7 +13,19 @@ OG.UI = {
     this.win.addEventListener('input', e => { if (e.target.id === 'treatyName') this.state.treatyName = e.target.value; });
     this.menu.addEventListener('input', e => { if (e.target.id === 'charName') this.state.charName = e.target.value; });
     this.initTouch();
+    // Geheimnis im Hauptmenü: STERN tippen oder achtmal auf den Titel tippen.
+    window.addEventListener('keydown', e => {
+      if (OG.running || this.menu.hidden || (e.target && e.target.tagName === 'INPUT')) return;
+      if (OG.Secrets.menuKey(e.code)) this.starFound();
+    });
+    this.menu.addEventListener('pointerdown', e => {
+      if (!e.target.closest('.mhead h1')) return;
+      const now = performance.now();
+      this.taps = (this.taps || []).filter(t => now - t < 4000).concat(now);
+      if (this.taps.length >= 8) { this.taps = []; for (const k of ['KeyS', 'KeyT', 'KeyE', 'KeyR', 'KeyN']) OG.Secrets.menuKey(k); this.starFound(); }
+    });
   },
+  starFound() { this.mstate.star = true; this.renderMenu(); },
   isOpen() { return !!this.panel; },
 
   // ---------- Kleinigkeiten ----------
@@ -71,7 +83,8 @@ OG.UI = {
     const load = P.carried, over = load > P.carry;
     this.set('#load', '<span class="' + (over ? 'bad' : '') + '">Last ' + OG.fmt(load, 1) + ' / ' + OG.fmt(P.carry) + ' kg' + (over ? ' · überladen' : '') + '</span>');
     let extra = P.buffs.map(b => '<span class="good">' + E(b.name) + ' ' + Math.max(0, Math.ceil(b.until - OG.time)) + ' s</span>').join(' ');
-    if (OG.Law.wanted > 0) extra += '<div class="bad strong">GESUCHT (Stufe ' + OG.Law.wanted + ') — [G] dem Gericht stellen</div>';
+    if (OG.Law.wanted > 0) extra += '<div class="bad strong">GESUCHT (Stufe ' + OG.Law.wanted + ')' + (OG.pvp.innocents > 0 && OG.Law.wanted >= 2 ? ' · BLUTSCHULD' : '') + ' — [G] dem Gericht stellen</div>';
+    if (OG.duel) extra += '<div class="gold strong">EHRENDUELL gegen ' + E(OG.duel.rival.name) + ' · ' + Math.max(0, Math.ceil(120 - (OG.time - OG.duel.start))) + ' s · Einsatz ' + OG.duel.wager + ' Taler</div>';
     if (P.demo) extra += '<div class="demo">DEMO: F1 +5 Stufen · F2 +5000 Taler · F3 +6 Std. · F4 Respekt +25 · F6 Siegel −30 %</div>';
     this.set('#buffs', extra);
 
@@ -124,6 +137,7 @@ OG.UI = {
       let info = '';
       if (t instanceof OG.Creature && t.def.ecosystem && !t.managed) info = 'Masse ' + t.def.mass + ' kg · Bestand ' + OG.Eco.count(t.def.id) + ' / ' + t.def.capacity + (t.juvenile ? ' · Jungtier' : '') + (t.def.diet === 'Fleischfresser' ? ' · Hunger ' + Math.round(t.hunger * 100) + ' %' : '');
       else if (t instanceof OG.Creature) info = 'Masse ' + t.def.mass + ' kg';
+      else if (t instanceof OG.Rival) info = 'Reisender · ' + t.cls.name + ' · Stufe ' + t.level + (t.outlaw ? ' · Gesetzlos, Kopfgeld ' + OG.bountyOf(t) + ' Taler' : '');
       this.set('#target', '<b>' + E(t.name) + '</b><div class="tbar"><i style="width:' + (t.frac * 100).toFixed(0) + '%"></i></div><small>' + E(info) + '</small>');
       $('#target').hidden = false;
     } else $('#target').hidden = true;
@@ -164,7 +178,8 @@ OG.UI = {
     if (s.screen === 'start') {
       h += '<div class="mbtns">' + (has ? '<button class="big" data-act="menuContinue">Fortsetzen</button>' : '') +
         '<button class="big" data-act="menuNew">Neues Spiel</button><button class="big" data-act="menuEdict">Das Edikt lesen</button></div>' +
-        '<p class="dim small">Spielstände werden nur in diesem Browser gespeichert.</p>';
+        '<p class="dim small">Spielstände werden nur in diesem Browser gespeichert.</p>' +
+        (s.star ? '<p class="starmsg">✦ Der Stern der Genesis leuchtet für dich. Ein Geheimnis ist gefunden — es zählt in deinem nächsten Spiel. ✦</p>' : '');
     } else if (s.screen === 'create') {
       const r = OG.Races[s.race], c = OG.Classes[s.cls];
       h += '<div class="create"><section><h3>Name</h3><input id="charName" maxlength="24" value="' + E(this.state.charName || '') + '" placeholder="Name deines Charakters" autocomplete="off">' +
@@ -222,7 +237,7 @@ OG.UI = {
 OG.greeting = n => {
   const P = OG.player;
   switch (n.role) {
-    case 'Kaiser': return '„Der Thron steht, solange die Sterne brennen. Was suchst du vor dem Thron der Genesis, ' + P.charName + '?“';
+    case 'Kaiser': return OG.Secrets.emperorLine() || '„Der Thron steht, solange die Sterne brennen. Was suchst du vor dem Thron der Genesis, ' + P.charName + '?“';
     case 'Richter': return '„Ich bewahre alle hundertsechsundsechzig Artikel des Edikts im Gedächtnis. Keines meiner Urteile weicht vom Buchstaben des Gesetzes ab.“';
     case 'Haendler': case 'Kraemer': return '„Ehrlicher Handel steht unter dem Schutz des Throns (Art. 42). Die Preise richten sich nach Angebot und Nachfrage.“';
     case 'Schmied': return '„Masse mal Beschleunigung, Reisender. Eine schwere Klinge schlägt härter — wenn du stark genug bist, sie schnell zu führen.“';
@@ -248,6 +263,7 @@ OG.greeting = n => {
       if (OG.Market.trend('fleisch') > 1.1) return '„Fleisch wird teurer. Irgendwer jagt zu viel oder die Karawanen stocken.“';
       if (OG.Weather.isStorm()) return '„Bei diesem Gewitter kommt keine Karawane durch.“';
       if (OG.Autonomy.isAutonomous()) return '„Hast du gehört? ' + OG.Autonomy.name + ' ist jetzt eine anerkannte Autonomie!“';
+      if (Math.random() < 0.2 && !OG.Secrets.has('goldlaeufer')) return '„Mein Vetter schwört, er hat auf den Wiesen westlich von Eichenhain einen goldenen Grasläufer gesehen. Nachts, schlafend. Er hat ihn natürlich verscheucht — der Trottel ist gerannt.“';
       return '„Ein Kontinent, ein Thron, ein Gesetz. So ist es seit der Ära der Einheit.“';
     }
   }
@@ -329,7 +345,7 @@ OG.Panels = {
     const Q = OG.QuestSys;
     const act = Q.active.slice().sort((a, b) => (b.def.main ? 1 : 0) - (a.def.main ? 1 : 0)).map(s => '<div class="qblock ' + (s.def.main ? 'main' : '') + '"><h4>' + E(s.def.title) + (s.def.main ? '' : ' <small>— ' + E(s.def.giver) + '</small>') + '</h4>' + (s.def.summary ? '<p class="dim small">' + E(s.def.summary) + '</p>' : '') +
       s.def.steps.map((st, i) => '<p class="' + (i < s.step ? 'good' : i === s.step ? '' : 'dim') + '">' + (i < s.step ? '✓ ' : i === s.step ? '► ' : '· ') + (i <= s.step ? E(st.text) + (i === s.step ? Q.progressText(s) : '') + (st.night && i === s.step ? ' (nur nachts)' : '') : '???') + '</p>').join('') + '</div>').join('') ||
-      '<p class="dim">Keine aktiven Aufträge. Achte auf ! über den Köpfen der Leute und auf das Auftragsbrett am Gildenhaus.</p>';
+      '<p class="dim">Keine aktiven Aufträge. Die Geschichte ist freiwillig: Achte auf ! über den Köpfen der Leute und auf das Auftragsbrett am Gildenhaus — oder level einfach, jage und miss dich mit anderen Reisenden.</p>';
     const story = OG.Quests.filter(q => q.main && Q.done.includes(q.id)).map(q => '<h4>' + E(q.title) + '</h4><p class="dim">' + E(q.done) + '</p>').join('') || '<p class="dim">Noch kein Kapitel abgeschlossen.</p>';
     const hint = Q.nextHint(), side = OG.Quests.filter(q => !q.main && Q.done.includes(q.id)).length;
     return {
@@ -340,7 +356,7 @@ OG.Panels = {
   },
 
   edict(a, s) {
-    const tabs = ['Edikt', 'Ränge', 'Kasse', 'Verkündungen', 'Register'];
+    const tabs = ['Edikt', 'Ränge', 'Kasse', 'Verkündungen', 'Register', 'Rangliste', 'Geheimnisse'];
     let body = '<div class="tabs">' + tabs.map((t, i) => btn(t, 'tab', i, true, i === s.tab ? 'on' : '')).join('') + '</div><div class="scroll tall">';
     if (s.tab === 0) body += '<p class="gold">' + E(OG.EdictPreamble) + '</p>' + OG.Edict.map(x => '<h4>' + x[0] + ' — ' + E(x[1]) + '</h4><p>' + E(x[2]) + '</p><p class="cyan small">Im Spiel: ' + E(x[3]) + '</p>').join('');
     else if (s.tab === 1) body += '<p>Ränge des Aufstiegs (Art. 48, 69). Vergabe durch die Prüfung der Meisterschaft in der Arena westlich von Grad Genesis. Der Rang ist begrenzt durch Leistung und Stufe.</p>' +
@@ -352,7 +368,9 @@ OG.Panels = {
         '<p class="dim">Ausgaben:</p>' + Object.keys(T.expenses).map(k => '<p class="bad">− ' + E(k) + ': ' + OG.fmt(T.expenses[k]) + '</p>').join('') +
         '<p class="dim small">Handelsabgabe 10 % (Art. 93) · Miete (Art. 117) · Gebühren und Bußgelder · Torgebühr ' + OG.C.gateFee + ' Taler (Art. 34)</p>';
     } else if (s.tab === 3) body += OG.announcements.map(x => '<p>' + E(x) + '</p>').join('') || '<p class="dim">Noch keine Verkündungen.</p>';
-    else body += OG.Law.record.map(x => '<p>' + E(x) + '</p>').join('') || '<p class="dim">Dein Register ist rein.</p>';
+    else if (s.tab === 4) body += OG.Law.record.map(x => '<p>' + E(x) + '</p>').join('') || '<p class="dim">Dein Register ist rein.</p>';
+    else if (s.tab === 5) body += OG.rankingHtml();
+    else body += OG.Secrets.panelHtml();
     return { title: 'Kaiserliches Edikt von Omni Genesis', wide: true, body: body + '</div>' };
   },
 
@@ -374,7 +392,7 @@ OG.Panels = {
     return {
       title: 'Menü',
       body: '<p class="dim">' + OG.C.title + ' — ' + OG.C.motto + '</p><div class="mbtns">' + btn('Fortsetzen', 'close', null, true, 'big') + btn('Speichern', 'saveGame', null, true, 'big') +
-        btn('Speichern und zum Hauptmenü', 'toMenu', null, true, 'big') + '</div><p class="dim small">Steuerung: WASD laufen · Shift sprinten · Maus zielen · linke Maustaste angreifen · Q/E/R Fähigkeiten · 1/2/3 Tränke · F interagieren · Mausrad zoomen · C I M L J P Fenster · G dem Gericht stellen · F5 speichern</p>',
+        btn('Speichern und zum Hauptmenü', 'toMenu', null, true, 'big') + '</div><p class="dim small">Steuerung: WASD laufen · Shift sprinten · Maus zielen · linke Maustaste angreifen · Q/E/R Fähigkeiten · 1/2/3 Tränke · F interagieren · Mausrad zoomen · C I M L J P Fenster · G dem Gericht stellen · F5 speichern · F bei anderen Reisenden: reden, Ehrenduell</p>',
     };
   },
 
@@ -404,6 +422,32 @@ OG.Panels = {
   },
 
   npc(n, s) { return OG.npcPanel(n, s); },
+  rival(r, s) { return OG.rivalPanel(r, s); },
+  secretText(d) { return { title: d.title, body: d.text.map((t, i) => '<p class="' + (i >= 2 ? 'gold' : '') + '">' + E(t) + '</p>').join('') }; },
+};
+
+// ---------- Andere Reisende ----------
+OG.rivalPanel = (r, s) => {
+  const P = OG.player;
+  if (!s.line) s.line = OG.pick(OG.Rivals.chatter).replace('{lvl}', r.level);
+  const wager = 10 * r.level;
+  let h = '<p class="speech">„' + E(s.line) + '“</p>' +
+    '<p>' + E(r.cls.name) + ' · Stufe ' + r.level + ' · Siege ' + r.kills + ' · Niederlagen ' + r.deaths + (r.grudge > 0 ? ' · <span class="bad">nachtragend</span>' : '') + '</p>' +
+    '<h3>Ehrenduell <small>Art. 124</small></h3><p class="dim small">Mit Erlaubnis des Throns: Einsatz ' + wager + ' Taler. Wer unter 15 % Leben fällt, gibt auf — niemand stirbt. Je höher deine Stufe über seiner, desto eher lehnt er ab.</p>' +
+    btn('Zum Ehrenduell fordern (' + wager + ' Taler Einsatz)', 'duel', null, !OG.duel && P.taler >= wager && OG.Law.wanted === 0, 'wide') +
+    (OG.Law.wanted ? '<p class="bad small">Gesuchte dürfen keine Duelle fordern.</p>' : '') +
+    '<h3>Angreifen</h3><p class="dim small">Ein Angriff auf einen friedlichen Reisenden ist ein Verbrechen (Art. 27). Tötest du ihn, trägst du Blutschuld: Die Legion jagt dich, Kopfgeldjäger auch. Beute: ein Teil seiner Taler.</p>' +
+    btn('Trotzdem angreifen (60 s zum Zuschlagen)', 'feud', null, true, 'wide');
+  if (s.result) h += '<p class="gold result">' + E(s.result) + '</p>';
+  return { title: r.name + ' — Reisender', body: h };
+};
+
+OG.rankingHtml = () => {
+  const pv = OG.pvp;
+  return '<p>Rangliste der Reisenden auf dem Kontinent (nach Stufe). Der Kaiser steht über allen: Stufe ' + OG.C.emperorLevel + ' — und nur er ist Kaiser.</p>' +
+    '<p class="dim small">Deine Bilanz: ' + pv.kills + ' Reisende besiegt (davon ' + pv.outlaws + ' Gesetzlose, ' + pv.innocents + ' Unschuldige) · ' + pv.deaths + ' Niederlagen · Duelle ' + pv.duelsWon + ':' + pv.duelsLost + '</p>' +
+    '<table class="rank"><tr><th>#</th><th>Name</th><th class="cls">Klasse</th><th>Stufe</th><th>Siege</th><th>Niederl.</th></tr>' +
+    OG.Rivals.ranking().map((x, i) => '<tr class="' + (x.me ? 'me' : x.outlaw ? 'outlaw' : '') + '"><td>' + (i + 1) + '</td><td>' + E(x.name) + (x.outlaw ? ' ☠' : '') + '</td><td class="cls">' + E(x.cls) + '</td><td>' + x.level + '</td><td>' + x.kills + '</td><td>' + x.deaths + '</td></tr>').join('') + '</table>';
 };
 
 OG.recipesHtml = forge => {
@@ -432,7 +476,7 @@ OG.npcPanel = (n, s) => {
   let h = '<p class="' + (s.line ? 'gold' : '') + ' speech">' + E(s.line || s.greeting) + '</p>';
   for (const qs of Q.talkSteps(n.npcName)) h += btn('[Auftrag] ' + E(qs.def.title) + ': ' + E(Q.step(qs).text), 'talk', qs.def.id, true, 'wide quest');
   for (const qs of Q.deliverSteps(n.npcName)) { const st = Q.step(qs), have = P.inv.count(st.target); h += btn('[Auftrag] Übergeben: ' + st.count + '× ' + OG.itemName(st.target) + ' (du hast ' + have + ')', 'deliver', qs.def.id, have >= st.count, 'wide quest'); }
-  if (n.role !== 'Gildenmeister') for (const q of Q.offersFrom(n.npcName)) h += '<div class="offer"><b>Neuer Auftrag: ' + E(q.title) + '</b><p class="dim small">' + E(q.summary) + '</p>' + btn('Annehmen', 'accept', q.id) + '</div>';
+  if (n.role !== 'Gildenmeister') for (const q of Q.offersFrom(n.npcName)) h += '<div class="offer' + (q.main ? ' main' : '') + '"><b>' + (q.main ? 'Die Geschichte: ' : 'Neuer Auftrag: ') + E(q.title) + '</b><p class="dim small">' + E(q.summary) + (q.main ? ' (Freiwillig — du kannst auch einfach leveln, jagen und kämpfen.)' : '') + '</p>' + btn(q.main ? 'Kapitel beginnen' : 'Annehmen', 'accept', q.id) + '</div>';
 
   switch (n.role) {
     case 'Kaiser': {
@@ -495,6 +539,12 @@ OG.npcPanel = (n, s) => {
 // ---------- Aktionen der Fenster ----------
 OG.Actions = {
   close() { OG.UI.close(); },
+  duel() { const e = OG.startDuel(OG.UI.arg); if (e) OG.UI.state.result = e; },
+  feud() {
+    const r = OG.UI.arg, P = OG.player;
+    P.feud = r; P.feudUntil = OG.time + 60; OG.UI.close();
+    OG.post('[Kampf] Du kannst ' + r.name + ' jetzt angreifen. Denk daran: Ohne Notwehr ist es ein Verbrechen (Art. 27).', 'pvp');
+  },
   alloc(i) { OG.player.allocate(+i); },
   second(id) { OG.player.chooseSecond(id); },
   unequip(w) { OG.player.unequip(w === 'w'); },

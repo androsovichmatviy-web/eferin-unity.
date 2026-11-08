@@ -214,7 +214,7 @@ class Player extends Entity {
 
   gainExp(a) {
     if (this.level >= OG.C.maxLevel || a <= 0) return;
-    this.exp += a * (1 + this.race.expBonus);
+    this.exp += a * (1 + this.race.expBonus + (OG.Secrets ? OG.Secrets.expBonus() : 0));
     while (this.level < OG.C.maxLevel && this.exp >= Player.expToNext(this.level)) {
       this.exp -= Player.expToNext(this.level); this.level++; this.free += OG.C.statPointsPerLevel;
       this.refresh(); this.hp = this.maxHp; this.aether = this.maxAether;
@@ -261,6 +261,12 @@ class Player extends Entity {
       this.counter(info.source); info.amount = 0; return info;
     }
     info.amount *= this.buffMult('dmgTaken', 1);
+    if (info.source instanceof OG.Rival && OG.time < info.source.duelGrace) { info.amount = 0; return info; }
+    // Ehrenduell (Art. 124): wer unter 15 % fällt, gibt auf — niemand stirbt.
+    if (OG.duel && info.source === OG.duel.rival) {
+      const eff = Math.max(0, info.amount) * 60 / (60 + Math.max(0, this.armor));
+      if (this.hp - eff <= this.maxHp * 0.15) { info.amount = 0; this.hp = Math.max(this.hp, this.maxHp * 0.15); OG.endDuel(false); }
+    }
     return info;
   }
   onDamaged(info, d) { if (d > 0) { OG.UI.hit(d / this.maxHp); OG.fx.float(this.x, this.y - 1.5, '-' + Math.round(d), '#ff5a4d'); } }
@@ -324,6 +330,9 @@ class Player extends Entity {
   canHit(e) {
     if (!e || e === this || e.dead || e.faction === 'Ally' || e.faction === 'Player') return false;
     if (e instanceof OG.Npc && e.target !== this && e !== this.aimed) return false;
+    // Andere Reisende nur, wenn man sie genau anvisiert, sie angreifen, sie gesetzlos sind oder ein Duell läuft.
+    if (e instanceof OG.Rival && !e.outlaw && !e.duel && e.target !== this && e !== this.aimed && e !== this.feud) return false;
+    if (OG.duel && e instanceof OG.Rival && e !== OG.duel.rival && !e.outlaw && e.target !== this) return false;
     return true;
   }
 
@@ -349,7 +358,7 @@ class Player extends Entity {
 
   faceAim(sec) {
     this.faceAimUntil = OG.time + sec; const a = this.aimPoint(); this.face = Math.atan2(a.y - this.y, a.x - this.x);
-    this.aimed = OG.Input.touch ? null : OG.nearest(a.x, a.y, 1.1, e => e instanceof OG.Npc);
+    this.aimed = OG.Input.touch ? null : OG.nearest(a.x, a.y, 1.1, e => e instanceof OG.Npc || e instanceof OG.Rival);
   }
 
   basicAttack(mult) {

@@ -42,6 +42,7 @@ input[type=text], input:not([type]) { font: inherit; font-size: 18px; color: var
 .strong { font-weight: 700; } .small { font-size: 13px; } .mono { font-family: var(--mono); font-size: 13px; } .center { text-align: center; }
 
 /* ---------- HUD ---------- */
+[hidden] { display: none !important; }
 #hud { position: fixed; inset: 0; pointer-events: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; }
 .card, #tracker, .trk, #msgs, .msg { box-sizing: border-box; }
 .card { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 3px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
@@ -71,6 +72,8 @@ input[type=text], input:not([type]) { font: inherit; font-size: 18px; color: var
 .msg { background: rgba(5, 14, 30, 0.86); border: 1px solid var(--line); padding: 7px 12px; font-size: 14px; border-radius: 2px; }
 .msg.ann { border-color: var(--gold); color: #ffeab0; }
 .msg.law { border-color: var(--bad); }
+.msg.secret { border-color: #c58cff; color: #ecd6ff; }
+.msg.pvp { border-color: #ff8a5c; color: #ffd9c7; }
 #banner { position: absolute; left: 0; right: 0; top: 30%; text-align: center; font-family: var(--display); font-size: clamp(30px, 6vw, 54px); letter-spacing: 0.04em; text-shadow: 0 3px 12px #000; opacity: 0; }
 #prompt { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); background: rgba(5, 14, 30, 0.88); border: 1px solid var(--line); padding: 8px 16px; font-size: 17px; font-weight: 600; white-space: nowrap; }
 .key { display: inline-block; min-width: 22px; padding: 0 5px; margin-right: 6px; border: 1px solid var(--gold); color: var(--gold); text-align: center; border-radius: 2px; }
@@ -138,6 +141,15 @@ input[type=text], input:not([type]) { font: inherit; font-size: 18px; color: var
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .tabs .on { border-color: var(--gold); color: var(--gold); }
 .offer { border: 1px solid rgba(242, 193, 77, 0.5); padding: 8px 10px; margin: 8px 0; background: rgba(60, 46, 12, 0.25); }
+.offer.main { border-color: var(--gold); background: rgba(80, 60, 14, 0.4); }
+table.rank { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+table.rank th, table.rank td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line-soft); }
+table.rank th { color: var(--gold); font-weight: 600; }
+table.rank tr.me td { color: var(--gold); font-weight: 600; }
+table.rank tr.outlaw td { color: #ff8a7a; }
+@media (max-width: 560px) { table.rank .cls { display: none; } table.rank th, table.rank td { padding: 4px 4px; } }
+.starmsg { color: var(--gold); text-align: center; animation: starpulse 1.6s ease-in-out infinite alternate; }
+@keyframes starpulse { from { opacity: 0.7; } to { opacity: 1; } }
 .qblock { border-left: 3px solid var(--line); padding: 2px 10px; margin: 8px 0; }
 .qblock.main { border-left-color: var(--gold); }
 .speech { font-size: 17px; line-height: 1.45; }
@@ -231,7 +243,7 @@ body.touch #skills, body.touch .help, body.touch #log { display: none; }
   <div id="prompt" hidden></div>
   <div id="log"></div>
   <div id="skills"></div>
-  <div class="help">WASD laufen · Shift sprinten · Maus zielen · Linksklick angreifen · Q E R Fähigkeiten · 1 2 3 Tränke · F interagieren · Mausrad zoomen · C Charakter · I Inventar · M Karte · L Aufträge · J Edikt · P Drei Säulen · Esc Menü</div>
+  <div class="help">WASD laufen · Shift sprinten · Maus zielen · Linksklick angreifen · Q E R Fähigkeiten · 1 2 3 Tränke · F interagieren · Mausrad zoomen · C Charakter · I Inventar · M Karte · L Aufträge · J Edikt · P Drei Säulen · F bei Reisenden: Ehrenduell · Esc Menü</div>
 </div>
 
 <div id="touch" hidden>
@@ -273,6 +285,8 @@ body.touch #skills, body.touch .help, body.touch #log { display: none; }
 <script src="js/actors.js"></script>
 <script src="js/systems.js"></script>
 <script src="js/society.js"></script>
+<script src="js/rivals.js"></script>
+<script src="js/secrets.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>

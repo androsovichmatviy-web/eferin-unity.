@@ -4,6 +4,7 @@
 OG.isHostileToPlayer = e => {
   if (e instanceof OG.Creature) return e.hostile;
   if (e instanceof OG.Npc) return e.target === OG.player;
+  if (e instanceof OG.Rival) return !e.respawnAt && (e.target === OG.player || e.outlaw || e.duel || e === OG.player.feud);
   return false;
 };
 
@@ -128,10 +129,10 @@ class Creature extends OG.Entity {
   isEnemy(h) {
     if (!h || h.dead || h === this) return false;
     const me = this.faction, o = h.faction;
-    if (me === 'Ally') return o === 'Void' || o === 'Construct' || (h instanceof Creature && h.target === OG.player);
-    if (me === 'Void' && this.def.diet === 'Kult') return o === 'Player' || o === 'Ally' || o === 'Citizen' || o === 'Guard';
+    if (me === 'Ally') return o === 'Void' || o === 'Construct' || (h instanceof Creature && h.target === OG.player) || (h instanceof OG.Rival && !h.duel && (o === 'Outlaw' || h.target === OG.player));
+    if (me === 'Void' && this.def.diet === 'Kult') return o === 'Player' || o === 'Ally' || o === 'Citizen' || o === 'Guard' || o === 'Rival' || o === 'Outlaw';
     if (me === 'Void') return o !== 'Void' && o !== 'Imperial';
-    if (me === 'Construct') return o === 'Player' || o === 'Ally';
+    if (me === 'Construct') return o === 'Player' || o === 'Ally' || o === 'Rival' || o === 'Outlaw';
     return o === 'Player' || o === 'Ally';
   }
 
@@ -174,7 +175,7 @@ class Creature extends OG.Entity {
     }
     if (d.temper === 'Scheu') {
       if (this.state === 'Flee' && OG.time < this.until) return;
-      const threat = OG.nearest(this.x, this.y, 12 * OG.Weather.aggroMult(), e => e.faction === 'Player' || e.faction === 'Ally' || e.faction === 'Void' || (e instanceof Creature && e.def.diet === 'Fleischfresser'));
+      const threat = OG.nearest(this.x, this.y, 12 * OG.Weather.aggroMult(), e => e.faction === 'Player' || e.faction === 'Ally' || e.faction === 'Void' || e.faction === 'Rival' || e.faction === 'Outlaw' || (e instanceof Creature && e.def.diet === 'Fleischfresser'));
       if (threat) { this.fleeFrom = { x: threat.x, y: threat.y }; this.set('Flee', 3); return; }
       if (night) { this.state = 'Sleep'; return; }
       if (OG.Weather.isStorm()) { this.state = 'Idle'; return; }
@@ -428,8 +429,11 @@ class Npc extends OG.Entity {
     if (this.target) return;
     const cx = this.role === 'Dorfwache' ? OG.Places.village.x : this.x, cy = this.role === 'Dorfwache' ? OG.Places.village.y : this.y;
     this.target = OG.nearest(cx, cy, this.role === 'Dorfwache' ? 30 : 22, e => {
+      if (e instanceof OG.Rival) return e.outlaw && !e.respawnAt;
       if (!(e instanceof Creature) || e.corpse || e.isAlly || e.def.diet === 'Konstrukt') return false;
-      return e.def.diet === 'Leere' || e.def.diet === 'Kult' || (e.hostile && (e.lastAttacker || e.def.temper === 'Feindselig'));
+      // Wildtiere nur, wenn sie gerade jemanden angreifen — sonst würde der Orden die Wölfe der Grenze ausrotten.
+      const t = e.target;
+      return e.def.diet === 'Leere' || e.def.diet === 'Kult' || (e.hostile && !!t && (t === P || t instanceof Npc || t instanceof OG.Rival || t.isAlly));
     });
   }
   fight(dt) {
@@ -444,7 +448,7 @@ class Npc extends OG.Entity {
         this.attackReady = OG.time + 2;
         const st = OG.Phys.spell(0.5, 220, 1), a = this.face;
         const p = new OG.Projectile(this, this.x + Math.cos(a) * 0.6, this.y + Math.sin(a) * 0.6, 1.5, Math.cos(a) * 22, Math.sin(a) * 22, { r: 0.28, color: '#b366ff', glow: true });
-        p.canHit = e => e === t || (e instanceof Creature && e.faction !== 'Ally');
+        p.canHit = e => e === t || (e instanceof Creature && e.faction !== 'Ally') || (e instanceof OG.Rival && e.outlaw);
         p.onHit = (e, pr) => this.deal(e, st, pr.vx / 22, pr.vy / 22);
       }
       return;

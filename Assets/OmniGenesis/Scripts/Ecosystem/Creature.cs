@@ -34,6 +34,7 @@ namespace OmniGenesis
         Vector3 home;
         CreatureState state = CreatureState.Wander;
         Health target;
+        public Health Target { get { return target; } }
         float thinkTimer;
         float stateUntil;
         Vector3 wanderTarget;

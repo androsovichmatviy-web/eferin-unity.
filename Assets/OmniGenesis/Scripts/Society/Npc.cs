@@ -236,7 +236,11 @@ namespace OmniGenesis
                 var c = h.GetComponent<Creature>();
                 if (c == null || c.IsCorpse || c.IsAlly) return false;
                 if (c.def.diet == Diet.Konstrukt) return false;
-                return c.def.diet == Diet.Leere || c.def.diet == Diet.Kult || (c.Hostile && (h.LastAttacker != null || c.def.temper == Temper.Feindselig));
+                // Wildtiere nur, wenn sie gerade jemanden angreifen — sonst rottet der Orden die Wölfe an der Grenze aus.
+                var t = c.Target;
+                if (c.def.diet == Diet.Leere || c.def.diet == Diet.Kult) return true;
+                if (!c.Hostile || t == null) return false;
+                return t == pc.health || t.GetComponent<Npc>() != null || t.faction == Faction.Ally;
             });
         }
 

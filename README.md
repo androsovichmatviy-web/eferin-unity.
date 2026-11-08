@@ -26,8 +26,27 @@ Prüfung der Meisterschaft, Hauptgeschichte, Neben- und Gildenaufträge, Weg der
 * Spielstand: im `localStorage` des Browsers.
 * Aufbau: `js/util.js` (Rauschen, Eingabe), `data.js` (Regelwerk, Geschichte, Edikt), `world.js` (Gelände, Gebäude),
   `entities.js` (Spieler, Physik), `actors.js` (Tiere, NPCs), `systems.js` (Uhr, Wetter, Ökosystem, Markt, Recht, Siegel, Einwohner),
-  `society.js` (Autonomie, Rangprüfung, Aufträge), `render.js`, `ui.js`, `main.js`.
-* Ferne Raubtiere jagen abstrakt weiter (ihre KI ruht außerhalb von 140 m), damit das Ökosystem auch ohne den Spieler stabil bleibt.
+  `society.js` (Autonomie, Rangprüfung, Aufträge), `rivals.js` (andere Reisende, Gesetzlose, Ehrenduell),
+  `secrets.js` (Geheimnisse), `render.js`, `ui.js`, `main.js`.
+* Raubtiere außer Sicht des Spielers (über 45 m) jagen abstrakt weiter, damit das Ökosystem stabil bleibt
+  (Test über 12 Spieltage: 12–18 Grasläufer, 5–8 Wölfe). Wachen greifen Wildtiere nur an, wenn diese gerade jemanden angreifen.
+
+### Freies Spiel: Leveln, andere Reisende, PvP
+
+* **Die Geschichte ist freiwillig.** Kapitel bieten ihre Auftraggeber an (goldenes `!`), nichts startet von selbst.
+  Man kann genauso gut nur leveln, jagen, handeln und kämpfen.
+* **Zehn andere Reisende** ziehen durch die Welt, steigen selbst auf, jagen, kämpfen und stehen in der **Rangliste** (Edikt `J` → Rangliste).
+  Der Kaiser steht über allen (Stufe 100) — Kaiser ist nur er.
+* **Gesetzlose** (rote Kapuze, ☠) überfallen Reisende außerhalb der Städte (Neulingsschutz bis Stufe 5). Ihr Versteck liegt westlich der Arena.
+  Wer sie besiegt, bekommt Beute, Erfahrung und **Kopfgeld** aus der Kaiserlichen Kasse.
+* **Friedliche Reisende angreifen** geht (genau anvisieren oder im Gesprächsfenster „Trotzdem angreifen“), ist aber ein Verbrechen (Art. 27).
+  Wer einen tötet, trägt **Blutschuld**: Die Legion jagt ihn, und starke Reisende werden zu Kopfgeldjägern. **Notwehr** ist kein Verbrechen.
+* **Ehrenduell** (Art. 124): Mit `F` einen Reisenden ansprechen und fordern. Einsatz 10 Taler pro Stufe des Gegners; wer unter 15 % Leben fällt, gibt auf.
+
+### Geheimnisse
+
+Acht Geheimnisse sind versteckt (Edikt `J` → Geheimnisse zeigt Hinweise). Jedes bringt Erfahrung; wer alle findet, wird
+„Hüter der Geheimnisse“ (+5 % Erfahrung). Andere Reisende und Bürger erzählen manchmal Gerüchte, die weiterhelfen.
 
 ---
 
@@ -215,6 +234,7 @@ Alle Zahlen des Regelwerks (Kaiserstufe, Respektschwelle, Abgaben, Gebühren, Ph
 * **Im Unity-Editor wurde das Spiel noch nicht gestartet.** Falls Fehler in der Konsole erscheinen, bitte den Text schicken.
 * Grafik und Figuren sind Platzhalter aus Grundkörpern. Eigene Modelle und Klänge kommen nach `Art/` und `Audio/`.
 * Nächster Schritt: **Weg des Krieges** (Abschnitt XI: Manifest, Vorbereitungszeit, Feld der Prüfung, Duell des Throns).
+* Andere Reisende, PvP und Geheimnisse gibt es bisher nur in der 2D-Version (`web2d/`).
 
 ---
 
@@ -225,3 +245,7 @@ Alle Zahlen des Regelwerks (Kaiserstufe, Respektschwelle, Abgaben, Gebühren, Ph
 3. В Unity выберите меню **Omni Genesis → Projekt einrichten**. Создадутся сцены и Build Settings.
 4. Нажмите **Play**. Камера переключается клавишей **V** (от первого или третьего лица), задания и сюжет открываются на **L**,
    справочник по Эдикту на **J**, Три Столпа на **P**. Для показа на защите при создании персонажа включите **Demo-Modus**: тогда работают клавиши F1–F6.
+
+**2D-версия (`web2d/`):** сюжет необязательный (главы предлагают NPC со знаком `!`), по миру ходят 10 других путников со своими уровнями
+и рейтингом, есть изгои с наградой за голову, нападение на мирных путников (это преступление — «кровавый долг»), Поединок Чести
+и 8 пасхалок (подсказки: J → Geheimnisse).
